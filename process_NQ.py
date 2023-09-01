@@ -7,9 +7,9 @@ import re
 
 def load_data(split, args):
     if args.dataset_type == "CWQ":
-        data_file_name = 'data/CWQ/generation/merged/CWQ_{}_new.json'.format(split)
+        data_file_name = 'data/CWQ/generation/merged/CWQ_{}.json'.format(split)
     elif args.dataset_type == "WebQSP":
-        data_file_name = 'data/WebQSP/generation/merged/WebQSP_{}_new.json'.format(split)
+        data_file_name = 'data/WebQSP/generation/merged/WebQSP_{}.json'.format(split)
     print('Loading data from:',data_file_name)
     data_dict = load_json(data_file_name)
     return data_dict

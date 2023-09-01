@@ -161,3 +161,6 @@ cython_debug/
 
 Freebase-Setup/virtuoso_db
 data/*
+LLMs/data/WebQSP*
+LLMs/data/CWQ*
+LLMs/data/GrailQA*
