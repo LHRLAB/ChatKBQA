@@ -16,5 +16,23 @@
       "response": "output",
       "history": "history"
     }
+  },
+  "CWQ_Freebase_NQ_train": {
+    "script_url": "CWQ_Freebase_NQ_train",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "CWQ_Freebase_NQ_test": {
+    "script_url": "CWQ_Freebase_NQ_test",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
   }
 }

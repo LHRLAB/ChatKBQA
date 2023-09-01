@@ -501,18 +501,12 @@ def extract_type_label_from_dataset(dataset, split):
     
     train_databank =load_json(f"data/{dataset}/sexpr/{dataset}.{split}.expr.json")
 
-    global_ent_label_map = {}
-    global_rel_label_map = {}
     global_type_label_map = {}
-
-    dataset_merged_label_map = {}
 
     for data in tqdm(train_databank, total=len(train_databank), desc=f"Processing {split}"):
         qid = data['ID']
         sparql = data['sparql']
 
-        ent_label_map = {}
-        rel_label_map = {}
         type_label_map = {}
 
         # extract entity labels
@@ -524,35 +518,15 @@ def extract_type_label_from_dataset(dataset, split):
                 is_type = True
 
             entity_label = get_label_with_odbc(entity)
-            if entity_label is not None:
-                ent_label_map[entity] = entity_label
-                global_ent_label_map[entity] = entity_label
 
             if is_type and entity_label is not None:
                 type_label_map[entity] = entity_label
                 global_type_label_map[entity] = entity_label
 
-        # extract relation labels
-        gt_relations = extract_mentioned_relations_from_sparql(sparql)
-        for rel in gt_relations:
-            linear_rel = _textualize_relation(rel)
-            rel_label_map[rel] = linear_rel
-            global_rel_label_map[rel] = linear_rel
-        
-        dataset_merged_label_map[qid] = {
-            'entity_label_map':ent_label_map,
-            'rel_label_map':rel_label_map,
-            'type_label_map':type_label_map
-        }
-
     dir_name = f"data/{dataset}/generation/label_maps"
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    
-    dump_json(dataset_merged_label_map,f'{dir_name}/{dataset}_{split}_label_maps.json',indent=4)    
 
-    dump_json(global_ent_label_map, f'{dir_name}/{dataset}_{split}_entity_label_map.json',indent=4)
-    dump_json(global_rel_label_map, f'{dir_name}/{dataset}_{split}_relation_label_map.json',indent=4)
     dump_json(global_type_label_map, f'{dir_name}/{dataset}_{split}_type_label_map.json',indent=4)
 
     print("done")

@@ -614,7 +614,12 @@ class Parser:
 
 def augment_with_s_expr_cwq(split, check_execute_accuracy=False):
     """augment original cwq datasets with s-expression"""
-    dataset = load_json(f'data/CWQ/origin/ComplexWebQuestions_{split}.json')
+    if split == 'train':
+        dataset_train = load_json(f'data/CWQ/origin/ComplexWebQuestions_train.json')
+        dataset_dev = load_json(f'data/CWQ/origin/ComplexWebQuestions_dev.json')
+        dataset = dataset_train + dataset_dev
+    else:
+        dataset = load_json(f'data/CWQ/origin/ComplexWebQuestions_{split}.json')
     total_num = 0
     hit_num = 0
     execute_hit_num = 0
@@ -685,7 +690,7 @@ def convert_cwq_sparql_instance(sparql, origin_data):
 def parse_cwq_sparql(check_execute_accuracy=False):
     """Parse CWQ sparqls into s-expressions"""
     augment_with_s_expr_cwq('train',check_execute_accuracy)
-    augment_with_s_expr_cwq('dev',check_execute_accuracy)
+    # augment_with_s_expr_cwq('dev',check_execute_accuracy)
     augment_with_s_expr_cwq('test',check_execute_accuracy)
     
 

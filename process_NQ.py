@@ -60,7 +60,7 @@ if __name__=='__main__':
     print(args)
     if args.dataset_type == "CWQ":
         prepare_dataloader(args,'train')
-        prepare_dataloader(args,'dev')
+        # prepare_dataloader(args,'dev')
         prepare_dataloader(args, 'test')
     elif args.dataset_type == "WebQSP":
         prepare_dataloader(args,'train')
