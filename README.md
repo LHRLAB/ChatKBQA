@@ -39,6 +39,20 @@ python3 virtuoso.py stop 3001
 
 A server with at least 100 GB RAM is recommended.
 
+#### Download FACC1 for Entity Retrieval.
+
+- Download the mention information (including processed FACC1 mentions and all entity alias in Freebase) from [FACC1](https://1drv.ms/u/s!AuJiG47gLqTznjl7VbnOESK6qPW2?e=HDy2Ye) to `data/common_data/facc1/`.
+
+```
+ChatKBQA/
+└── data/
+    ├── common_data/                  
+        ├── facc1/   
+            ├── entity_list_file_freebase_complete_all_mention
+            └── surface_map_file_freebase_complete_all_mention                                                 
+--------
+```
+
 ## Dataset
 
 Experiments are conducted on 3 semantic parsing benchmarks WebQSP, CWQ and GrailQA.
@@ -96,7 +110,11 @@ The augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train,dev].jso
 
 (2) **Prepare data for training and evaluation**
 
-- WebQSP: Run `python data_process.py --action merge_all --dataset WebQSP --split test[train]`. The merged data file will be saved as `data/WebQSP/generation/merged/WebQSP_test[train].json`.
+- WebQSP: 
+
+Run `python data_process.py --action merge_all --dataset WebQSP --split test[train]`. The merged data file will be saved as `data/WebQSP/generation/merged/WebQSP_test[train].json`.
+
+Run `python data_process.py --action get_type_label_map --dataset WebQSP --split train`. The merged data file will be saved as `data/WebQSP/generation/label_maps/WebQSP_train_type_label_map.json`.
 
 - CWQ: Run `python data_process.py --action merge_all --dataset CWQ --split test[train,dev]` The merged data file will be saved as `data/CWQ/generation/merged/CWQ_test[train,dev].json`.
 

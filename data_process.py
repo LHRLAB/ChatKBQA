@@ -496,7 +496,7 @@ def get_merged_disambiguated_entities(dataset, split):
 
 
 
-def extract_entity_relation_type_label_from_dataset(dataset, split):
+def extract_type_label_from_dataset(dataset, split):
     
     
     train_databank =load_json(f"data/{dataset}/sexpr/{dataset}.{split}.expr.json")
@@ -558,21 +558,15 @@ def extract_entity_relation_type_label_from_dataset(dataset, split):
     print("done")
 
 
-def extract_entity_relation_type_label_from_dataset_webqsp(dataset, split):
+def extract_type_label_from_dataset_webqsp(dataset, split):
     # Each WebQSP question may have more than one "Parse"，get label_map of all "Parse"s
     
     train_databank =load_json(f"data/{dataset}/sexpr/{dataset}.{split}.expr.json")
 
-    global_ent_label_map = {}
-    global_rel_label_map = {}
     global_type_label_map = {}
-
-    dataset_merged_label_map = {}
 
     for data in tqdm(train_databank, total=len(train_databank), desc=f"Processing {split}"):
         qid = data['QuestionId']
-        ent_label_map = {}
-        rel_label_map = {}
         type_label_map = {}
         
         for parse in data["Parses"]:
@@ -586,35 +580,15 @@ def extract_entity_relation_type_label_from_dataset_webqsp(dataset, split):
                     is_type = True
 
                 entity_label = get_label_with_odbc(entity)
-                if entity_label is not None:
-                    ent_label_map[entity] = entity_label
-                    global_ent_label_map[entity] = entity_label
 
                 if is_type and entity_label is not None:
                     type_label_map[entity] = entity_label
                     global_type_label_map[entity] = entity_label
 
-            # extract relation labels
-            gt_relations = extract_mentioned_relations_from_sparql(sparql)
-            for rel in gt_relations:
-                linear_rel = _textualize_relation(rel)
-                rel_label_map[rel] = linear_rel
-                global_rel_label_map[rel] = linear_rel
-        
-        dataset_merged_label_map[qid] = {
-            'entity_label_map':ent_label_map,
-            'rel_label_map':rel_label_map,
-            'type_label_map':type_label_map
-        }
-
     dir_name = f"data/{dataset}/generation/label_maps"
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     
-    dump_json(dataset_merged_label_map,f'{dir_name}/{dataset}_{split}_label_maps.json',indent=4)    
-
-    dump_json(global_ent_label_map, f'{dir_name}/{dataset}_{split}_entity_label_map.json',indent=4)
-    dump_json(global_rel_label_map, f'{dir_name}/{dataset}_{split}_relation_label_map.json',indent=4)
     dump_json(global_type_label_map, f'{dir_name}/{dataset}_{split}_type_label_map.json',indent=4)
 
     print("done")
@@ -785,11 +759,11 @@ if __name__=='__main__':
         make_sorted_relation_dataset_from_logits(dataset=args.dataset, split=args.split)
     elif action.lower()=='merge_all':
         merge_all_data_for_logical_form_generation(dataset=args.dataset, split=args.split)
-    elif action.lower()=='get_label_map':
+    elif action.lower()=='get_type_label_map':
         if args.dataset == "CWQ":
-            extract_entity_relation_type_label_from_dataset(dataset=args.dataset, split=args.split)
+            extract_type_label_from_dataset(dataset=args.dataset, split=args.split)
         elif args.dataset == "WebQSP":
-            extract_entity_relation_type_label_from_dataset_webqsp(dataset=args.dataset, split=args.split)
+            extract_type_label_from_dataset_webqsp(dataset=args.dataset, split=args.split)
     else:
         print('usage: data_process.py action [--dataset DATASET] --split SPLIT ')
 
