@@ -128,7 +128,7 @@ Test LLMs for Logical Form Generation:
 CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset WebQSP_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --output_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
 
-Use Beam-setting LLMs for Logical Form Generation:
+Beam-setting LLMs for Logical Form Generation:
 ```bash
 CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --num_beams 10 >> predbeam_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
