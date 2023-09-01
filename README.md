@@ -93,7 +93,7 @@ sudo bash pull_dependency_grailqa.sh
 
 ## Main Processing
 
-(2) **Parse SPARQL queries to S-expressions** 
+(1) **Parse SPARQL queries to S-expressions** 
 
 - WebQSP: Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train,dev].json`. 
 
