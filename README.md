@@ -113,3 +113,37 @@ The augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train,dev].jso
 - WebQSP: Run `python process_NQ.py --dataset_type WebQSP`. The merged data file will be saved as `LLMs/data/WebQSP_Freebase_NQ_test[train]/examples.json`.
 
 - CWQ: Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train,dev]/examples.json`.
+
+(3) **Train and test LLM model for Logical Form Generation**
+
+- WebQSP: 
+
+Train LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=3 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+```
+
+Test LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset WebQSP_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --output_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+```
+
+Use Beam-setting LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --num_beams 10 >> predbeam_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+```
+
+
+(4) **Evaluate KBQA result with Retrieval**
+
+- WebQSP: 
+
+Evaluate KBQA result with entity-retrieval and relation-retrieval:
+```bash
+CUDA_VISIBLE_DEVICES=0 nohup python -u eval_final.py >> predfinal_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+```
+
+Evaluate KBQA result with golden-entities and relation-retrieval:
+```bash
+CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final.py --golden_ent >> predfinalgoldent_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+```
