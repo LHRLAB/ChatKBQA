@@ -166,3 +166,4 @@ LLMs/data/CWQ*
 LLMs/data/GrailQA*
 Reading/*
 train*
+wandb/*
