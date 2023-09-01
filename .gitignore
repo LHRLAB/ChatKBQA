@@ -164,3 +164,4 @@ data/*
 LLMs/data/WebQSP*
 LLMs/data/CWQ*
 LLMs/data/GrailQA*
+Reading/*
