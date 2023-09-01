@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 Freebase-Setup/virtuoso_db
+data/

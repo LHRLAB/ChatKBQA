@@ -45,3 +45,60 @@ python3 virtuoso.py stop 3001
 ```
 
 A server with at least 100 GB RAM is recommended. You may adjust the maximum amount of RAM the service may use and other configurations via the provided script.
+
+## Dataset
+
+Experiments are conducted on 3 semantic parsing benchmarks WebQSP, CWQ and GrailQA.
+
+### WebQSP
+
+Download the WebQSP dataset from [here](https://www.microsoft.com/en-us/research/publication/the-value-of-semantic-parse-labeling-for-knowledge-base-question-answering-2/) and put them under `data/WebQSP/origin`. The dataset files should be named as `WebQSP.test[train].json`.
+
+```
+ChatKBQA/
+└── data/
+    ├── WebQSP                  
+        ├── origin                    
+            ├── WebQSP.train.json                    
+            └── WebQSP.test.json                                       
+```
+
+### CWQ
+
+Download the CWQ dataset [here](https://www.dropbox.com/sh/7pkwkrfnwqhsnpo/AACuu4v3YNkhirzBOeeaHYala) and put them under `data/CWQ/origin`. The dataset files should be named as `ComplexWebQuestions_test[train,dev].json`.
+
+```
+ChatKBQA/
+└── data/
+    ├── CWQ                 
+        ├── origin                    
+            ├── ComplexWebQuestions_train.json                   
+            ├── ComplexWebQuestions_dev.json      
+            └── ComplexWebQuestions_test.json                              
+```
+
+### GrailQA
+
+This dataset contains the parallel data of natural language questions and the corresponding logical forms in **SPARQL**. It can be downloaded via the [offical website](https://dki-lab.github.io/GrailQA/) as provided by [Gu et al. (2020)](https://dl.acm.org/doi/abs/10.1145/3442381.3449992). To focus on the sole task of semantic parsing, we replace the entity IDs (e.g. `m.06mn7`) with their respective names (e.g. `Stanley Kubrick`) in the logical forms, thus eliminating the need for an explicit entity linking module. 
+
+Then, replace the url in `data/grailqa/utils/sparql_executer.py` with your own Freebase KG virtuoso url.
+
+Please note that such replacement can cause inequivalent execution results.  Thus, the performance reported in our paper may not be directly comparable to the other works. 
+
+To pull the dependencies for running the GrailQA experiments, please run:
+
+```sh
+sudo bash pull_dependency_grailqa.sh
+```
+
+## Main Processing
+
+(2) **Parse SPARQL queries to S-expressions** 
+
+- WebQSP: Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train,dev].json`. 
+
+- CWQ: Run `python parse_sparql_cwq.py`, and it will augment the original dataset files with s-expressions. 
+The augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train,dev].json`.
+ 
+
+
