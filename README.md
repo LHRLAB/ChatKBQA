@@ -101,4 +101,8 @@ sudo bash pull_dependency_grailqa.sh
 The augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train,dev].json`.
  
 
+(2) **Prepare data for LLM model**
 
+- WebQSP: Run `python data_process.py merge_all --dataset WebQSP --split test[train]`. The merged data file will be saved as `data/WebQSP/generation/merged/WebQSP_test[train].json`.
+
+- CWQ: Run `python data_process.py merge_all --dataset CWQ --split test[train,dev]` The merged data file will be saved as `data/CWQ/generation/merged/CWQ_test[train,dev].json`.

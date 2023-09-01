@@ -17,8 +17,6 @@ def load_data(split, args):
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_type', default="WebQSP", type=str, help="CWQ | WebQSP")
-    parser.add_argument("--retrieval_dir", type=str, default='Retrieval/ChatGLMv2/Retrieval_WebQSP_Freebase_lora_epoch10')
-    parser.add_argument("--max_length", type=int, default=1024)
     args = parser.parse_args()
     return args
 
@@ -37,26 +35,6 @@ def prepare_dataloader(args,split):
     else:
         examples = [x for x in data]
     print(f'Real {split} dataset len: {len(examples)}')
-    
-    retrieval_dir = os.path.join(args.retrieval_dir, 'evaluation_{}/generated_predictions.jsonl'.format(split))
-    retrieval_data=[]
-    with open(retrieval_dir) as file:
-        for line in file:
-            retrieval_data.append(json.loads(line))
-
-    retrieval_count_dir = 'data/{}/retrieval_count/{}_{}_count.json'.format(args.dataset_type, args.dataset_type, split)
-    with open(retrieval_count_dir) as file:
-        retrieval_count = json.load(file)
-        retrieval_count_list = list(retrieval_count.values())
-        assert len(retrieval_count) == len(examples)
-        assert sum(retrieval_count_list) == len(retrieval_data)
-        
-    result = []
-    start_idx = 0
-    for count in list(retrieval_count_list):
-        end_idx = start_idx + count
-        result.append(retrieval_data[start_idx:end_idx])
-        start_idx = end_idx
 
     json_data=[]
     instruction='Generate a Logical Form query that retrieves the information corresponding to the given question. \n'
