@@ -49,8 +49,7 @@ ChatKBQA/
     ├── common_data/                  
         ├── facc1/   
             ├── entity_list_file_freebase_complete_all_mention
-            └── surface_map_file_freebase_complete_all_mention                                                 
---------
+            └── surface_map_file_freebase_complete_all_mention                                           
 ```
 
 ## Dataset
