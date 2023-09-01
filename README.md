@@ -39,7 +39,7 @@ python3 virtuoso.py stop 3001
 
 A server with at least 100 GB RAM is recommended.
 
-#### Download FACC1 for Entity Retrieval.
+#### Download FACC1 mentions for Entity Retrieval.
 
 - Download the mention information (including processed FACC1 mentions and all entity alias in Freebase) from [FACC1](https://1drv.ms/u/s!AuJiG47gLqTznjl7VbnOESK6qPW2?e=HDy2Ye) to `data/common_data/facc1/`.
 
