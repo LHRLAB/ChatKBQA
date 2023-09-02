@@ -167,3 +167,4 @@ LLMs/data/GrailQA*
 Reading/*
 train*
 wandb/*
+pred*
