@@ -20,8 +20,8 @@ from typing import Pattern
 from components.utils import *
 from components.expr_parser import parse_s_expr, extract_entities, tokenize_s_expr
 from executor.sparql_executor import execute_query
-from executor.sparql_executor import get_label, execute_query_with_odbc
-from executor.logic_form_util import lisp_to_sparql
+from executor.sparql_executor import get_label, execute_query, execute_query_with_odbc
+from utils.logic_form_util import lisp_to_sparql
 
 
 class ParseError(Exception):
@@ -612,91 +612,57 @@ class Parser:
         return dep, left
 
 
-def augment_with_s_expr_cwq(split, check_execute_accuracy=False):
-    """augment original cwq datasets with s-expression"""
+def augment_with_s_expr_grailqa(split, check_execute_accuracy=False):
+    """augment original grailqa datasets with s-expression"""
     if split == 'train':
-        dataset_train = load_json(f'data/CWQ/origin/ComplexWebQuestions_train.json')
-        dataset_dev = load_json(f'data/CWQ/origin/ComplexWebQuestions_dev.json')
+        dataset_train = load_json(f'data/GrailQA/origin/grailqa_v1.0_train.json')
+        dataset_dev = load_json(f'data/GrailQA/origin/grailqa_v1.0_dev.json')
         dataset = dataset_train + dataset_dev
-    else:
-        dataset = load_json(f'data/CWQ/origin/ComplexWebQuestions_{split}.json')
-    total_num = 0
-    hit_num = 0
-    execute_hit_num = 0
-    failed_instances = []
-    for i,data in enumerate(dataset):
-        total_num += 1
-        sparql = data['sparql']  # sparql string
-        instance, flag_success = convert_cwq_sparql_instance(sparql, data)
-        if flag_success:
+
+        total_num = 0
+        hit_num = 0
+        execute_hit_num = 0
+        for i,data in enumerate(dataset):
+            total_num += 1
             hit_num += 1
             if check_execute_accuracy:
                 execute_right_flag = False
                 try:
-                    execute_ans = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(instance['SExpr']))]
-                    if split=='test':
-                        gold_ans = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(data['sparql']))]
-                    else:
-                        gold_ans = [x['answer_id'] for x in data['answers']]    
+                    execute_ans = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(data["s_expression"]))]
+                    gold_ans = [x['answer_argument'] for x in data['answer']]    
                     if set(execute_ans) == set(gold_ans):
                         execute_hit_num +=1
                         execute_right_flag = True
-                        # print(f'{i}: SExpr generation:{flag_success}, Execute right:{execute_right_flag}')
-                    instance['SExpr_execute_right'] = execute_right_flag
+                    if not execute_right_flag:
+                        print(data["s_expression"])
                 except Exception:
-                    # instance['SExpr_executed_succeed']=False
-                    instance['SExpr_execute_right'] = execute_right_flag
-                if not execute_right_flag:
-                    pass
-                    # print(f'ID:{instance["ID"]},\nExpected Ansewr:{gold_ans},\nGot Answer:{execute_ans}')
-        else:
-            # if check_execute_accuracy:
-            #     instance['SExpr_execute_right'] = False
-            failed_instances.append(instance)
-    # print(hit_num, total_num, hit_num/total_num, len(dataset))
-        if (i+1)%100==0:
-            print(f'In the First {i+1} questions, S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {i+1}')
-            if check_execute_accuracy:    
-                print(f'In the First {i+1} questions, Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {i+1}', )
+                    if not execute_right_flag:
+                        print(data["s_expression"])
+            if (i+1)%100==0:
+                print(f'In the First {i+1} questions, S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {i+1}')
+                if check_execute_accuracy:    
+                    print(f'In the First {i+1} questions, Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {i+1}', )
 
-    print(f'S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {len(dataset)}')
-    print(f'Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {len(dataset)}', )
-    
-    sexpr_dir = 'data/CWQ/sexpr'
+        print(f'S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {len(dataset)}')
+        print(f'Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {len(dataset)}', )
+    else:
+        dataset = load_json(f'data/GrailQA/origin/grailqa_v1.0_test_public.json')    
+    sexpr_dir = 'data/GrailQA/sexpr'
     if not os.path.exists(sexpr_dir):
         os.makedirs(sexpr_dir)
-    dump_json(dataset, f'{sexpr_dir}/CWQ.{split}.expr.json', indent=4)
-    #dump_json(failed_instances, f'{sexpr_dir}/CWQ.{split}.expr_failed.json', indent=4)
+    dump_json(dataset, f'{sexpr_dir}/GrailQA.{split}.expr.json', indent=4)
 
 
-def convert_cwq_sparql_instance(sparql, origin_data):
-    """convert a cwq sparql to a s_expr"""
-    
-    pattern_str = r'ns:m\.0\w*'
-    # pattern = re.compile(pattern_str)
-    mid_list = list(set([mid.strip()
-                    for mid in re.findall(pattern_str, sparql)]))
-
-    try:
-        s_expr = parser.parse_query_cwq(sparql, mid_list)
-    except AssertionError:
-        # print(f'Error processing sparql: {sparql}')
-        s_expr = 'null'
-
-    origin_data['SExpr'] = s_expr
-    return origin_data, s_expr != 'null'
-
-
-def parse_cwq_sparql(check_execute_accuracy=False):
+def parse_grailqa_sparql(check_execute_accuracy=False):
     """Parse CWQ sparqls into s-expressions"""
-    augment_with_s_expr_cwq('train',check_execute_accuracy)
+    augment_with_s_expr_grailqa('train',check_execute_accuracy)
     # augment_with_s_expr_cwq('dev',check_execute_accuracy)
-    augment_with_s_expr_cwq('test',check_execute_accuracy)
+    augment_with_s_expr_grailqa('test',check_execute_accuracy)
     
 
 if __name__ == '__main__':
     
     parser = Parser()
-    parse_cwq_sparql(check_execute_accuracy=False)
+    parse_grailqa_sparql(check_execute_accuracy=False)
 
     

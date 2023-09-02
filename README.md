@@ -85,16 +85,16 @@ ChatKBQA/
 
 ### GrailQA
 
-This dataset contains the parallel data of natural language questions and the corresponding logical forms in **SPARQL**. It can be downloaded via the [offical website](https://dki-lab.github.io/GrailQA/) as provided by [Gu et al. (2020)](https://dl.acm.org/doi/abs/10.1145/3442381.3449992). To focus on the sole task of semantic parsing, we replace the entity IDs (e.g. `m.06mn7`) with their respective names (e.g. `Stanley Kubrick`) in the logical forms, thus eliminating the need for an explicit entity linking module. 
+Download the GrailQA dataset [here](https://dki-lab.github.io/GrailQA/) and put them under `data/GrailQA/origin`. The dataset files should be named as `grailqa_v1.0_test_public[train,dev].json`.
 
-Then, replace the url in `data/grailqa/utils/sparql_executer.py` with your own Freebase KG virtuoso url.
-
-Please note that such replacement can cause inequivalent execution results.  Thus, the performance reported in our paper may not be directly comparable to the other works. 
-
-To pull the dependencies for running the GrailQA experiments, please run:
-
-```sh
-sudo bash pull_dependency_grailqa.sh
+```
+ChatKBQA/
+└── data/
+    ├── GrailQA                 
+        ├── origin                    
+            ├── grailqa_v1.0_train.json                   
+            ├── grailqa_v1.0_dev.json      
+            └── grailqa_v1.0_test_public.json                              
 ```
 
 ## Main Processing
@@ -103,8 +103,9 @@ sudo bash pull_dependency_grailqa.sh
 
 - WebQSP: Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train].json`. 
 
-- CWQ: Run `python parse_sparql_cwq.py`, and it will augment the original dataset files with s-expressions. 
-The augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
+- CWQ: Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
+
+- GrailQA: Run `python parse_sparql_grailqa.py` and the augmented dataset files are saved as `data/GrailQA/sexpr/GrailQA.test[train].json`.
  
 
 (2) **Prepare data for training and evaluation**
@@ -121,12 +122,20 @@ Run `python data_process.py --action merge_all --dataset CWQ --split test[train]
 
 Run `python data_process.py --action get_type_label_map --dataset CWQ --split train`. The merged data file will be saved as `data/CWQ/generation/label_maps/CWQ_train_type_label_map.json`.
 
+- GrailQA: 
+
+Run `python data_process.py --action merge_all --dataset GrailQA --split test[train]` The merged data file will be saved as `data/GrailQA/generation/merged/GrailQA_test[train].json`.
+
+Run `python data_process.py --action get_type_label_map --dataset GrailQA --split train`. The merged data file will be saved as `data/GrailQA/generation/label_maps/GrailQA_train_type_label_map.json`.
+
 
 (3) **Prepare data for LLM model**
 
 - WebQSP: Run `python process_NQ.py --dataset_type WebQSP`. The merged data file will be saved as `LLMs/data/WebQSP_Freebase_NQ_test[train]/examples.json`.
 
 - CWQ: Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train]/examples.json`.
+
+- GrailQA: Run `python process_NQ.py --dataset_type GrailQA` The merged data file will be saved as `LLMs/data/GrailQA_Freebase_NQ_test[train]/examples.json`.
 
 (4) **Train and test LLM model for Logical Form Generation**
 
@@ -168,6 +177,26 @@ CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model
 ```
 ```bash
 python run_generator_final.py --data_file_name Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
+```
+
+- GrailQA: 
+
+Train LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=1 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset GrailQA_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 10.0 --plot_loss  --fp16 >> train_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
+```
+
+Test LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset GrailQA_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --output_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
+```
+
+Beam-setting LLMs for Logical Form Generation:
+```bash
+CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset GrailQA_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --num_beams 10 >> predbeam_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
+```
+```bash
+python run_generator_final.py --data_file_name Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
 ```
 
 

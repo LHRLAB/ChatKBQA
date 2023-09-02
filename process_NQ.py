@@ -6,10 +6,7 @@ from tqdm import tqdm
 import re
 
 def load_data(split, args):
-    if args.dataset_type == "CWQ":
-        data_file_name = 'data/CWQ/generation/merged/CWQ_{}.json'.format(split)
-    elif args.dataset_type == "WebQSP":
-        data_file_name = 'data/WebQSP/generation/merged/WebQSP_{}.json'.format(split)
+    data_file_name = 'data/{}/generation/merged/{}_{}.json'.format(args.dataset_type,args.dataset_type,split)
     print('Loading data from:',data_file_name)
     data_dict = load_json(data_file_name)
     return data_dict
@@ -58,12 +55,7 @@ if __name__=='__main__':
     
     args = _parse_args()
     print(args)
-    if args.dataset_type == "CWQ":
-        prepare_dataloader(args,'train')
-        # prepare_dataloader(args,'dev')
-        prepare_dataloader(args, 'test')
-    elif args.dataset_type == "WebQSP":
-        prepare_dataloader(args,'train')
-        prepare_dataloader(args, 'test')
+    prepare_dataloader(args,'train')
+    prepare_dataloader(args, 'test')
     print('Finished')
 
