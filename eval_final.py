@@ -39,12 +39,12 @@ def is_number(t):
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--split', default='test', help='split to operate on, can be `test`, `dev` and `train`')
-    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
+    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
     parser.add_argument('--server_ip', default=None, help='server ip for debugging')
     parser.add_argument('--server_port', default=None, help='server port for debugging')
     parser.add_argument('--qid',default=None,type=str, help='single qid for debug, None by default' )
     parser.add_argument('--test_batch_size', default=2)
-    parser.add_argument('--dataset', default='WebQSP', type=str, help='dataset type, can be `CWQ、`WebQSP`')
+    parser.add_argument('--dataset', default='CWQ', type=str, help='dataset type, can be `CWQ、`WebQSP`')
     parser.add_argument('--beam_size', default=50, type=int)
     parser.add_argument('--golden_ent', default=False, action='store_true')
 
@@ -285,7 +285,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in tqdm(denorm_sexprs[:20]):
+    for d in tqdm(denorm_sexprs[:5]):
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
@@ -372,7 +372,8 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
     if dataset == "CWQ":
         train_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_train.json')
         test_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_test.json')
-        dev_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_dev.json')
+        dev_gen_dataset = None
+        # dev_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_dev.json')
     elif dataset == "WebQSP":
         train_gen_dataset = load_json('data/WebQSP/generation/merged/WebQSP_train.json')
         test_gen_dataset = load_json('data/WebQSP/generation/merged/WebQSP_test.json')
@@ -528,6 +529,8 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         processed+=1
         if processed%100==0:
             print(f'Processed:{processed}, gen_executable_cnt:{gen_executable_cnt}')
+        # if processed==5:
+        #     break
 
 
         
