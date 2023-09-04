@@ -8,7 +8,7 @@ from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results
 from components.utils import dump_json, load_json
 from tqdm import tqdm
 from executor.sparql_executor import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
-from executor.logic_form_util import lisp_to_sparql
+from utils.logic_form_util import lisp_to_sparql
 import re
 import os
 from entity_retrieval import surface_index_memory
@@ -39,12 +39,12 @@ def is_number(t):
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--split', default='test', help='split to operate on, can be `test`, `dev` and `train`')
-    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
+    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
     parser.add_argument('--server_ip', default=None, help='server ip for debugging')
     parser.add_argument('--server_port', default=None, help='server port for debugging')
     parser.add_argument('--qid',default=None,type=str, help='single qid for debug, None by default' )
     parser.add_argument('--test_batch_size', default=2)
-    parser.add_argument('--dataset', default='WebQSP', type=str, help='dataset type, can be `CWQ、`WebQSP`')
+    parser.add_argument('--dataset', default='GrailQA', type=str)
     parser.add_argument('--beam_size', default=50, type=int)
     parser.add_argument('--golden_ent', default=False, action='store_true')
 
@@ -369,14 +369,9 @@ def try_relation(d):
 
 def aggressive_top_k_eval_new(split, predict_file, dataset):
     """Run top k predictions, using linear origin map"""
-    if dataset == "CWQ":
-        train_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_train.json')
-        test_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_test.json')
-        dev_gen_dataset = None
-        # dev_gen_dataset = load_json('data/CWQ/generation/merged/CWQ_dev.json')
-    elif dataset == "WebQSP":
-        train_gen_dataset = load_json('data/WebQSP/generation/merged/WebQSP_train.json')
-        test_gen_dataset = load_json('data/WebQSP/generation/merged/WebQSP_test.json')
+    if dataset == "GrailQA":
+        train_gen_dataset = load_json('data/GrailQA/generation/merged/GrailQA_train.json')
+        test_gen_dataset = load_json('data/GrailQA/generation/merged/GrailQA_test.json')
         dev_gen_dataset = None
     
     predictions = load_json(predict_file)
@@ -392,11 +387,8 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
     else:
         gen_dataset = test_gen_dataset
 
-    if dataset == "CWQ":
-        train_type_map = load_json(f"data/CWQ/generation/label_maps/CWQ_train_type_label_map.json")
-        train_type_map = {l.lower():t for t,l in train_type_map.items()}
-    elif dataset == "WebQSP":
-        train_type_map = load_json(f"data/WebQSP/generation/label_maps/WebQSP_train_type_label_map.json")
+    if dataset == "GrailQA":
+        train_type_map = load_json(f"data/GrailQA/generation/label_maps/GrailQA_train_type_label_map.json")
         train_type_map = {l.lower():t for t,l in train_type_map.items()}
     
     
@@ -404,10 +396,8 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         "data/common_data/facc1/entity_list_file_freebase_complete_all_mention", "data/common_data/facc1/surface_map_file_freebase_complete_all_mention",
         "data/common_data/facc1/freebase_complete_all_mention")
     
-    ex_cnt = 0
     top_hit = 0
-    lines = []
-    official_lines = []
+    official_lines = dict()
     failed_preds = []
 
     gen_executable_cnt = 0
@@ -437,26 +427,13 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
             
             denormed_pred.append(lf)
 
-            if rank == 0 and lf.lower() ==gen_feat['sexpr'].lower():
-                ex_cnt +=1
             
             if answers:
                 executable_index = rank
-                lines.append({
-                    'qid': qid, 
-                    'execute_index': executable_index,
-                    'logical_form': lf, 
-                    'answer':answers,
-                    'gt_sexpr': gen_feat['sexpr'], 
-                    'gt_normed_sexpr': pred['gen_label'],
-                    'pred': pred, 
-                    'denormed_pred':denormed_pred
-                })
-
-                official_lines.append({
-                    "QuestionId": qid,
-                    "Answers": answers
-                })
+                official_lines[qid]={
+                    'logical_form':lf,
+                    'answer':answers
+                }
                
                 if rank==0:
                     top_hit +=1
@@ -484,28 +461,13 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
                 answers = [date_post_process(ans) for ans in list(answers)]
                 
                 denormed_pred.append(lf)
-
-                if rank == 0 and lf.lower() ==gen_feat['sexpr'].lower():
-                    ex_cnt +=1
                 
                 if answers:
                     executable_index = rank
-                    lines.append({
-                        'qid': qid, 
-                        'execute_index': executable_index,
-                        'logical_form': lf, 
-                        'answer':answers,
-                        'gt_sexpr': gen_feat['sexpr'], 
-                        'gt_normed_sexpr': pred['gen_label'],
-                        'pred': pred, 
-                        'denormed_pred':denormed_pred
-                    })
-
-                    official_lines.append({
-                        "QuestionId": qid,
-                        "Answers": answers
-                    })
-                
+                    official_lines[qid]={
+                        'logical_form':lf,
+                        'answer':answers
+                    }
                     if rank==0:
                         top_hit +=1
                     break
@@ -533,33 +495,29 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         #     break
 
 
-        
-    print('STR Match', ex_cnt/ len(predictions))
+    
     print('TOP 1 Executable', top_hit/ len(predictions))
     print('Gen Executable', gen_executable_cnt/ len(predictions))
     print('Final Executable', final_executable_cnt/ len(predictions))
 
-    result_file = os.path.join(dirname,f'{filename}_gen_sexpr_results.json')
-    official_results_file = os.path.join(dirname,f'{filename}_gen_sexpr_results_official_format.json')
-    dump_json(lines, result_file, indent=4)
-    dump_json(official_lines, official_results_file, indent=4)
+    official_results_file = os.path.join(dirname,f'{filename}_output.json')
+    dump_json(official_lines, official_results_file)
 
     # write failed predictions
     dump_json(failed_preds,os.path.join(dirname,f'{filename}_gen_failed_results.json'),indent=4)
     dump_json({
-        'STR Match': ex_cnt/ len(predictions),
         'TOP 1 Executable': top_hit/ len(predictions),
         'Gen Executable': gen_executable_cnt/ len(predictions),
         'Final Executable': final_executable_cnt/ len(predictions)
     }, os.path.join(dirname,f'{filename}_statistics.json'),indent=4)
 
-    # evaluate
-    if dataset == "CWQ":
-        args.pred_file = result_file
-        cwq_evaluate_valid_results(args)
-    else:
-        args.pred_file = official_results_file
-        webqsp_evaluate_valid_results(args)
+    # # evaluate
+    # if dataset == "GrailQA":
+    #     args.pred_file = result_file
+    #     cwq_evaluate_valid_results(args)
+    # else:
+    #     args.pred_file = official_results_file
+    #     webqsp_evaluate_valid_results(args)
         
 
 

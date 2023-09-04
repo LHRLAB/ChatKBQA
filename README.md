@@ -206,12 +206,12 @@ python run_generator_final.py --data_file_name Reading/LLaMA2-13b/GrailQA_Freeba
 
 Evaluate KBQA result with entity-retrieval and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
 
 Evaluate KBQA result with golden-entities and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=4 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
 
 - CWQ: 
@@ -230,10 +230,10 @@ CUDA_VISIBLE_DEVICES=5 nohup python -u eval_final_cwq.py --dataset CWQ --pred_fi
 
 Evaluate KBQA result with entity-retrieval and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u eval_final.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final_grailqa.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
 
-Evaluate KBQA result with golden-entities and relation-retrieval:
+<!-- Evaluate KBQA result with golden-entities and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
+CUDA_VISIBLE_DEVICES=4 nohup python -u eval_final_grailqa.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
+``` -->
