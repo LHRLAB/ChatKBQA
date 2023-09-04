@@ -668,13 +668,12 @@ def lisp_to_sparql(lisp_program: str):
                 if var not in filter_variables and var != '?x' and not var.startswith('?sk'):
                     filter_variables.append(var)
                     
-    ifvar=True       
+    
     for entity in entities:
         clauses.append(f'FILTER (?x != ns:{entity})')
-        ifvar = False
-    if ifvar:
-        for var in filter_variables:
-            clauses.append(f"FILTER (?x != {var})")
+
+    for var in filter_variables:
+        clauses.append(f"FILTER (?x != {var})")
         
     num = 0
     sentences = [s for s in clauses]
