@@ -21,7 +21,7 @@ from components.utils import *
 from components.expr_parser import parse_s_expr, extract_entities, tokenize_s_expr
 from executor.sparql_executor import execute_query
 from executor.sparql_executor import get_label, execute_query_with_odbc
-from executor.logic_form_util import lisp_to_sparql
+from executor.logic_form_util_cwq import lisp_to_sparql
 
 
 class ParseError(Exception):
@@ -641,9 +641,13 @@ def augment_with_s_expr_cwq(split, check_execute_accuracy=False):
                     if set(execute_ans) == set(gold_ans):
                         execute_hit_num +=1
                         execute_right_flag = True
+                    else:
+                        temp = lisp_to_sparql(instance['SExpr'])
+                        temp = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(instance['SExpr']))]
                         # print(f'{i}: SExpr generation:{flag_success}, Execute right:{execute_right_flag}')
                     instance['SExpr_execute_right'] = execute_right_flag
                 except Exception:
+                    temp = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(instance['SExpr']))]
                     # instance['SExpr_executed_succeed']=False
                     instance['SExpr_execute_right'] = execute_right_flag
                 if not execute_right_flag:
@@ -697,6 +701,6 @@ def parse_cwq_sparql(check_execute_accuracy=False):
 if __name__ == '__main__':
     
     parser = Parser()
-    parse_cwq_sparql(check_execute_accuracy=False)
+    parse_cwq_sparql(check_execute_accuracy=True)
 
     

@@ -697,8 +697,11 @@ def augment_with_s_expr_webqsp(split, check_execute_accuracy=False):
                             execute_hit_num +=1
                             execute_right_flag = True
                             # print(f'{i}: SExpr generation:{flag_success}, Execute right:{execute_right_flag}')
+                        else:
+                            temp = execute_query_with_odbc(lisp_to_sparql(instance['SExpr']))
                         instance['SExpr_execute_right'] = execute_right_flag
                     except Exception:
+                        temp = execute_query_with_odbc(lisp_to_sparql(instance['SExpr']))
                         # instance['SExpr_executed_succeed']=False
                         instance['SExpr_execute_right'] = execute_right_flag
                     if not execute_right_flag:

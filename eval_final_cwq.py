@@ -8,7 +8,7 @@ from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results
 from components.utils import dump_json, load_json
 from tqdm import tqdm
 from executor.sparql_executor import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
-from executor.logic_form_util import lisp_to_sparql
+from executor.logic_form_util_cwq import lisp_to_sparql
 import re
 import os
 from entity_retrieval import surface_index_memory
@@ -39,12 +39,12 @@ def is_number(t):
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--split', default='test', help='split to operate on, can be `test`, `dev` and `train`')
-    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
+    parser.add_argument('--pred_file', default='Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json', help='topk prediction file')
     parser.add_argument('--server_ip', default=None, help='server ip for debugging')
     parser.add_argument('--server_port', default=None, help='server port for debugging')
     parser.add_argument('--qid',default=None,type=str, help='single qid for debug, None by default' )
     parser.add_argument('--test_batch_size', default=2)
-    parser.add_argument('--dataset', default='WebQSP', type=str, help='dataset type, can be `CWQ、`WebQSP`')
+    parser.add_argument('--dataset', default='CWQ', type=str, help='dataset type, can be `CWQ、`WebQSP`')
     parser.add_argument('--beam_size', default=50, type=int)
     parser.add_argument('--golden_ent', default=False, action='store_true')
 
