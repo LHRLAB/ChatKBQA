@@ -285,7 +285,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in denorm_sexprs[:5]:
+    for d in tqdm(denorm_sexprs[:5]):
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
