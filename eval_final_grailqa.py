@@ -327,7 +327,7 @@ def try_relation(d):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:30]
+    exprs = [" ".join(s) for s in combinations][:10]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
