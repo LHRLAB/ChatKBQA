@@ -171,7 +171,7 @@ def denormalize_s_expr_new(normed_expr,
                                 else:       
                                     search = True                         
                         if search:
-                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=50)
+                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=5)
                             if facc1_cand_entities:
                                 temp = []
                                 for key in list(facc1_cand_entities.keys())[1:]:
@@ -229,7 +229,7 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
         return 'null', []
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
-    for query_expr in query_exprs[:500]:
+    for query_expr in query_exprs[:30]:
         try:
             # invalid sexprs, may leads to infinite loops
             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
@@ -285,7 +285,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in tqdm(denorm_sexprs[:5]):
+    for d in tqdm(denorm_sexprs[:2]):
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
