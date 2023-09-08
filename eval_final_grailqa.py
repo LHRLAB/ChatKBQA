@@ -7,8 +7,8 @@ from generation.cwq_evaluate import cwq_evaluate_valid_results
 from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results
 from components.utils import dump_json, load_json
 from tqdm import tqdm
-from executor.sparql_executor import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
-from utils.logic_form_util import lisp_to_sparql
+from executor.sparql_executor_grailqa import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
+from executor.logic_form_util_cwq import lisp_to_sparql
 import re
 import os
 from entity_retrieval import surface_index_memory
@@ -171,7 +171,7 @@ def denormalize_s_expr_new(normed_expr,
                                 else:       
                                     search = True                         
                         if search:
-                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=5)
+                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=3)
                             if facc1_cand_entities:
                                 temp = []
                                 for key in list(facc1_cand_entities.keys())[1:]:
@@ -229,16 +229,18 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
         return 'null', []
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
-    for query_expr in query_exprs[:30]:
+    for query_expr in query_exprs[:10]:
         try:
             # invalid sexprs, may leads to infinite loops
             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
                 denotation = []
             else:
+
                 sparql_query = lisp_to_sparql(query_expr)
+
                 denotation = execute_query_with_odbc(sparql_query)
-                denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
-                if len(denotation) == 0 :
+                denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
+                if len(denotation) == 0 and sparql_query.count('WHERE') == 1:
                     
                     ents = set ()
                     
@@ -257,7 +259,10 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
                             clauses = clauses[:i+1] + addline + clauses[i+1:]
                             break
                     sparql_query = '\n'.join(clauses)
+                    # print("start")
+                    # print(sparql_query)
                     denotation = execute_query_with_odbc(sparql_query)
+                    # print("end")
                     denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]                    
         except:
             denotation = []
@@ -285,7 +290,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in tqdm(denorm_sexprs[:2]):
+    for d in denorm_sexprs[:5]:
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
@@ -447,43 +452,44 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         if executable_index is not None:
             # found executable query from generated model
             gen_executable_cnt +=1
-        else:
-            denormed_pred = []
+        # ############
+        # else:
+        #     denormed_pred = []
             
-            # find the first executable lf
-            for rank, p in enumerate(pred['predictions']):
-                lf, answers = execute_normed_s_expr_from_label_maps_rel(
-                                                    p, 
-                                                    entity_label_map,
-                                                    train_type_map,
-                                                    surface_index)
+        #     # find the first executable lf
+        #     for rank, p in enumerate(pred['predictions']):
+        #         lf, answers = execute_normed_s_expr_from_label_maps_rel(
+        #                                             p, 
+        #                                             entity_label_map,
+        #                                             train_type_map,
+        #                                             surface_index)
 
-                answers = [date_post_process(ans) for ans in list(answers)]
+        #         answers = [date_post_process(ans) for ans in list(answers)]
                 
-                denormed_pred.append(lf)
+        #         denormed_pred.append(lf)
                 
-                if answers:
-                    executable_index = rank
-                    official_lines[qid]={
-                        'logical_form':lf,
-                        'answer':answers
-                    }
-                    if rank==0:
-                        top_hit +=1
-                    break
+        #         if answers:
+        #             executable_index = rank
+        #             official_lines[qid]={
+        #                 'logical_form':lf,
+        #                 'answer':answers
+        #             }
+        #             if rank==0:
+        #                 top_hit +=1
+        #             break
                     
-            if executable_index is not None:
-                # found executable query from generated model
-                gen_executable_cnt +=1
+        #     if executable_index is not None:
+        #         # found executable query from generated model
+        #         gen_executable_cnt +=1
                 
-            else:
+        #     else:
             
-                failed_preds.append({'qid':qid, 
-                                'gt_sexpr': gen_feat['sexpr'], 
-                                'gt_normed_sexpr': pred['gen_label'],
-                                'pred': pred, 
-                                'denormed_pred':denormed_pred})
-        
+        #         failed_preds.append({'qid':qid, 
+        #                         'gt_sexpr': gen_feat['sexpr'], 
+        #                         'gt_normed_sexpr': pred['gen_label'],
+        #                         'pred': pred, 
+        #                         'denormed_pred':denormed_pred})
+        # ############
             
         if executable_index is not None:
             final_executable_cnt+=1
@@ -491,7 +497,7 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         processed+=1
         if processed%100==0:
             print(f'Processed:{processed}, gen_executable_cnt:{gen_executable_cnt}')
-        # if processed==5:
+        # if processed==20:
         #     break
 
 
