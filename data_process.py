@@ -37,8 +37,8 @@ from executor.sparql_executor import (
 def _parse_args():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--action',default='merge_all',help='Action to operate')
-    parser.add_argument('--dataset', default='WebQSP', help='dataset to perform entity linking, should be CWQ or WebQSP')
+    parser.add_argument('--action',default='get_type_label_map',help='Action to operate')
+    parser.add_argument('--dataset', default='GrailQA', help='dataset to perform entity linking, should be CWQ or WebQSP')
     parser.add_argument('--split', default='train', help='split to operate on') # the split file: ['dev','test','train']
     
     

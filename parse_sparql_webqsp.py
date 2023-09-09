@@ -856,4 +856,4 @@ if __name__ == '__main__':
     Execution accuracy of generated S-Expression will be verified.
     It will later be used as an filtering condition in step (5).1
     """
-    parse_webqsp_sparql(check_execute_accuracy=True)
+    parse_webqsp_sparql(check_execute_accuracy=False)

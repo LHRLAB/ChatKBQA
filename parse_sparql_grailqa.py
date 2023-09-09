@@ -634,10 +634,13 @@ def augment_with_s_expr_grailqa(split, check_execute_accuracy=False):
                         execute_hit_num +=1
                         execute_right_flag = True
                     if not execute_right_flag:
-                        print(data["s_expression"])
+                        # print(data["s_expression"])
+                        pass
                 except Exception:
                     if not execute_right_flag:
-                        print(data["s_expression"])
+                        # print(data["s_expression"])
+                        pass
+            dataset[i]['sparql_query']=lisp_to_sparql(data["s_expression"])
             if (i+1)%100==0:
                 print(f'In the First {i+1} questions, S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {i+1}')
                 if check_execute_accuracy:    
@@ -663,6 +666,6 @@ def parse_grailqa_sparql(check_execute_accuracy=False):
 if __name__ == '__main__':
     
     parser = Parser()
-    parse_grailqa_sparql(check_execute_accuracy=False)
+    parse_grailqa_sparql(check_execute_accuracy=True)
 
     

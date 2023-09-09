@@ -8,7 +8,7 @@ from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results
 from components.utils import dump_json, load_json
 from tqdm import tqdm
 from executor.sparql_executor_grailqa import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
-from executor.logic_form_util_cwq import lisp_to_sparql
+from utils.logic_form_util import lisp_to_sparql
 import re
 import os
 from entity_retrieval import surface_index_memory
@@ -263,7 +263,7 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
                     # print(sparql_query)
                     denotation = execute_query_with_odbc(sparql_query)
                     # print("end")
-                    denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]                    
+                    denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]                  
         except:
             denotation = []
         if len(denotation) != 0 :
@@ -277,7 +277,8 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
 def execute_normed_s_expr_from_label_maps_rel(normed_expr, 
                                         entity_label_map,
                                         type_label_map,
-                                        surface_index
+                                        surface_index,
+                                        rel_map
                                         ):
     try:
         denorm_sexprs = denormalize_s_expr_new(normed_expr, 
@@ -290,8 +291,8 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in denorm_sexprs[:5]:
-        query_expr, denotation = try_relation(d)
+    for d in denorm_sexprs[:10]:
+        query_expr, denotation = try_relation(d,rel_map)
         if len(denotation) != 0 :
             break          
         
@@ -300,7 +301,79 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     return query_expr, denotation
 
-def try_relation(d):
+# def try_relation(d,rel_map):
+#     ent_list = set()
+#     rel_list = set()
+#     denorm_sexpr = d.split(' ')
+#     for item in denorm_sexpr:
+#         if item.startswith('m.'):
+#             ent_list.add(item)
+#         elif '.' in item:
+#             rel_list.add(item)
+#     ent_list = list(ent_list)
+#     rel_list = list(rel_list)
+#     cand_rels = set()
+#     for ent in ent_list:
+#         in_rels, out_rels, _ = get_2hop_relations_with_odbc_wo_filter(ent)
+#         cand_rels = cand_rels | set(in_rels) | set(out_rels)
+#     cand_rels = list(cand_rels)
+#     if len(cand_rels) == 0:
+#         return d.replace('( ','(').replace(' )', ')'), []
+#     similarities = model.similarity(rel_list, cand_rels)
+#     change = dict()
+#     for i, rel in enumerate(rel_list):
+#         merged_list = list(zip(cand_rels, similarities[i]))
+#         sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
+#         change_rel = []
+#         for s in sorted_list:
+#             if s[1] > 0.01:
+#                 change_rel.append(s[0])
+#         change[rel] = change_rel[:3]
+#     for i, item in enumerate(denorm_sexpr):
+#         if item in rel_list:
+#             denorm_sexpr[i] = change[item]
+#     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
+#     exprs = [" ".join(s) for s in combinations][:10]
+#     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
+#     for query_expr in query_exprs:
+#         try:
+#             # invalid sexprs, may leads to infinite loops
+#             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
+#                 denotation = []
+#             else:
+#                 sparql_query = lisp_to_sparql(query_expr)
+#                 denotation = execute_query_with_odbc(sparql_query)
+#                 denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+#                 if len(denotation) == 0 :
+                    
+#                     ents = set ()
+                    
+#                     for item in sparql_query.replace('(', ' ( ').replace(')', ' ) ').split(' '):
+#                         if item.startswith("ns:m."):
+#                             ents.add(item)
+#                     addline = []
+#                     for i, ent in enumerate(list(ents)):
+#                         addline.append(f'{ent} rdfs:label ?en{i} . ')
+#                         addline.append(f'?ei{i} rdfs:label ?en{i} . ')
+#                         addline.append(f'FILTER (langMatches( lang(?en{i}), "EN" ) )')
+#                         sparql_query = sparql_query.replace(ent, f'?ei{i}')
+#                     clauses = sparql_query.split('\n')
+#                     for i, line in enumerate(clauses):
+#                         if line == "FILTER (!isLiteral(?x) OR lang(?x) = '' OR langMatches(lang(?x), 'en'))":
+#                             clauses = clauses[:i+1] + addline + clauses[i+1:]
+#                             break
+#                     sparql_query = '\n'.join(clauses)
+#                     denotation = execute_query_with_odbc(sparql_query)
+#                     denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+#         except:
+#             denotation = []
+#         if len(denotation) != 0 :
+#             break              
+#     if len(denotation) == 0 :
+#         query_expr = query_exprs[0]      
+#     return query_expr, denotation  
+
+def try_relation(d,rel_map):
     ent_list = set()
     rel_list = set()
     denorm_sexpr = d.split(' ')
@@ -312,9 +385,11 @@ def try_relation(d):
     ent_list = list(ent_list)
     rel_list = list(rel_list)
     cand_rels = set()
-    for ent in ent_list:
-        in_rels, out_rels, _ = get_2hop_relations_with_odbc_wo_filter(ent)
-        cand_rels = cand_rels | set(in_rels) | set(out_rels)
+    for rel in rel_list:
+        for key in rel_map.keys():
+            if rel.startswith(key):
+                for r in rel_map[key]:
+                    cand_rels.add(r)
     cand_rels = list(cand_rels)
     if len(cand_rels) == 0:
         return d.replace('( ','(').replace(' )', ')'), []
@@ -325,14 +400,21 @@ def try_relation(d):
         sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
         change_rel = []
         for s in sorted_list:
-            if s[1] > 0.01:
+            if s[1] > 0.01 and s[0].count('.')==rel.count('.'):
                 change_rel.append(s[0])
-        change[rel] = change_rel[:3]
+        if len(change_rel)==0:
+            for s in sorted_list:
+                if s[1] > 0.01:
+                    change_rel.append(s[0])    
+        if len(change_rel)==0:
+            for s in sorted_list:
+                change_rel.append(s[0])          
+        change[rel] = change_rel[:10]
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:10]
+    exprs = [" ".join(s) for s in combinations][:100]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
@@ -342,7 +424,7 @@ def try_relation(d):
             else:
                 sparql_query = lisp_to_sparql(query_expr)
                 denotation = execute_query_with_odbc(sparql_query)
-                denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+                denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
                 if len(denotation) == 0 :
                     
                     ents = set ()
@@ -363,7 +445,7 @@ def try_relation(d):
                             break
                     sparql_query = '\n'.join(clauses)
                     denotation = execute_query_with_odbc(sparql_query)
-                    denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+                    denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
         except:
             denotation = []
         if len(denotation) != 0 :
@@ -371,6 +453,7 @@ def try_relation(d):
     if len(denotation) == 0 :
         query_expr = query_exprs[0]      
     return query_expr, denotation  
+
 
 def aggressive_top_k_eval_new(split, predict_file, dataset):
     """Run top k predictions, using linear origin map"""
@@ -396,7 +479,7 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         train_type_map = load_json(f"data/GrailQA/generation/label_maps/GrailQA_train_type_label_map.json")
         train_type_map = {l.lower():t for t,l in train_type_map.items()}
     
-    
+    rel_map =  load_json(f"ontology/domain_dict")
     surface_index = surface_index_memory.EntitySurfaceIndexMemory(
         "data/common_data/facc1/entity_list_file_freebase_complete_all_mention", "data/common_data/facc1/surface_map_file_freebase_complete_all_mention",
         "data/common_data/facc1/freebase_complete_all_mention")
@@ -452,44 +535,45 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         if executable_index is not None:
             # found executable query from generated model
             gen_executable_cnt +=1
-        # ############
-        # else:
-        #     denormed_pred = []
+        ############
+        else:
+            denormed_pred = []
             
-        #     # find the first executable lf
-        #     for rank, p in enumerate(pred['predictions']):
-        #         lf, answers = execute_normed_s_expr_from_label_maps_rel(
-        #                                             p, 
-        #                                             entity_label_map,
-        #                                             train_type_map,
-        #                                             surface_index)
+            # find the first executable lf
+            for rank, p in enumerate(pred['predictions']):
+                lf, answers = execute_normed_s_expr_from_label_maps_rel(
+                                                    p, 
+                                                    entity_label_map,
+                                                    train_type_map,
+                                                    surface_index,
+                                                    rel_map)
 
-        #         answers = [date_post_process(ans) for ans in list(answers)]
+                answers = [date_post_process(ans) for ans in list(answers)]
                 
-        #         denormed_pred.append(lf)
+                denormed_pred.append(lf)
                 
-        #         if answers:
-        #             executable_index = rank
-        #             official_lines[qid]={
-        #                 'logical_form':lf,
-        #                 'answer':answers
-        #             }
-        #             if rank==0:
-        #                 top_hit +=1
-        #             break
+                if answers:
+                    executable_index = rank
+                    official_lines[qid]={
+                        'logical_form':lf,
+                        'answer':answers
+                    }
+                    if rank==0:
+                        top_hit +=1
+                    break
                     
-        #     if executable_index is not None:
-        #         # found executable query from generated model
-        #         gen_executable_cnt +=1
+            if executable_index is not None:
+                # found executable query from generated model
+                gen_executable_cnt +=1
                 
-        #     else:
+            else:
             
-        #         failed_preds.append({'qid':qid, 
-        #                         'gt_sexpr': gen_feat['sexpr'], 
-        #                         'gt_normed_sexpr': pred['gen_label'],
-        #                         'pred': pred, 
-        #                         'denormed_pred':denormed_pred})
-        # ############
+                failed_preds.append({'qid':qid, 
+                                'gt_sexpr': gen_feat['sexpr'], 
+                                'gt_normed_sexpr': pred['gen_label'],
+                                'pred': pred, 
+                                'denormed_pred':denormed_pred})
+        ############
             
         if executable_index is not None:
             final_executable_cnt+=1
