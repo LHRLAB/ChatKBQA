@@ -106,6 +106,8 @@ ChatKBQA/
 - CWQ: Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
 
 - GrailQA: Run `python parse_sparql_grailqa.py` and the augmented dataset files are saved as `data/GrailQA/sexpr/GrailQA.test[train].json`.
+
+- GrailQA: Run `python parse_sparql_grailqa-dev.py` and the augmented dataset files are saved as `data/GrailQA-dev/sexpr/GrailQA-dev.test[train].json`.
  
 
 (2) **Prepare data for training and evaluation**
