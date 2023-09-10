@@ -291,7 +291,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in denorm_sexprs[:5]:
+    for d in tqdm(denorm_sexprs[:5]):
         query_expr, denotation = try_relation(d,rel_map)
         if len(denotation) != 0 :
             break          
@@ -409,12 +409,12 @@ def try_relation(d,rel_map):
         if len(change_rel)==0:
             for s in sorted_list:
                 change_rel.append(s[0])          
-        change[rel] = change_rel[:5]
+        change[rel] = change_rel[:4]
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:500]
+    exprs = [" ".join(s) for s in combinations][:200]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
