@@ -629,8 +629,6 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
     # else:
     #     args.pred_file = official_results_file
     #     webqsp_evaluate_valid_results(args)
-        
-
 
 if __name__=='__main__':
     """go down the top-k list to get the first executable locial form"""
