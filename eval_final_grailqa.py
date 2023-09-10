@@ -291,7 +291,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in denorm_sexprs[:10]:
+    for d in denorm_sexprs[:5]:
         query_expr, denotation = try_relation(d,rel_map)
         if len(denotation) != 0 :
             break          
@@ -400,21 +400,21 @@ def try_relation(d,rel_map):
         sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
         change_rel = []
         for s in sorted_list:
-            if s[1] > 0.01 and s[0].count('.')==rel.count('.'):
+            if s[1] > 0.5 and s[0].count('.')==rel.count('.'):
                 change_rel.append(s[0])
         if len(change_rel)==0:
             for s in sorted_list:
-                if s[1] > 0.01:
+                if s[1] > 0.5:
                     change_rel.append(s[0])    
         if len(change_rel)==0:
             for s in sorted_list:
                 change_rel.append(s[0])          
-        change[rel] = change_rel[:10]
+        change[rel] = change_rel[:5]
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:100]
+    exprs = [" ".join(s) for s in combinations][:500]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
@@ -480,21 +480,40 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         train_type_map = {l.lower():t for t,l in train_type_map.items()}
     
     rel_map =  load_json(f"ontology/domain_dict")
+    
+    official_results_file = os.path.join(dirname,f'{filename}_output.json')
+    if os.path.exists(official_results_file):
+        official_lines = load_json(official_results_file)
+        max_index = max([int(key[5:]) for key in official_lines.keys()])
+    else:
+        official_lines = dict()
+        max_index = -1
+    
+    failed_file = os.path.join(dirname,f'{filename}_gen_failed_results.json')
+    if os.path.exists(failed_file):
+        failed_preds = load_json(failed_file)  
+    else:
+        failed_preds = []
+    
+    
+    
     surface_index = surface_index_memory.EntitySurfaceIndexMemory(
         "data/common_data/facc1/entity_list_file_freebase_complete_all_mention", "data/common_data/facc1/surface_map_file_freebase_complete_all_mention",
         "data/common_data/facc1/freebase_complete_all_mention")
     
     top_hit = 0
-    official_lines = dict()
-    failed_preds = []
 
     gen_executable_cnt = 0
     final_executable_cnt = 0
     processed = 0
+    num_predictions = 0
     for (pred,gen_feat) in tqdm(zip(predictions,gen_dataset), total=len(gen_dataset), desc=f'Evaluating {split}'):
-        
         denormed_pred = []
         qid = gen_feat['ID']
+        if int(qid[5:]) <= max_index:
+            continue
+        else:
+            num_predictions += 1
             
         if args.golden_ent:
             entity_label_map = {v.lower(): k for k, v in list(gen_feat['gold_entity_map'].items())}
@@ -522,7 +541,7 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
                     'logical_form':lf,
                     'answer':answers
                 }
-               
+                dump_json(official_lines, official_results_file)
                 if rank==0:
                     top_hit +=1
                 break
@@ -558,6 +577,7 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
                         'logical_form':lf,
                         'answer':answers
                     }
+                    dump_json(official_lines, official_results_file)
                     if rank==0:
                         top_hit +=1
                     break
@@ -573,6 +593,7 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
                                 'gt_normed_sexpr': pred['gen_label'],
                                 'pred': pred, 
                                 'denormed_pred':denormed_pred})
+                dump_json(failed_preds,failed_file,indent=4)
         ############
             
         if executable_index is not None:
@@ -586,19 +607,19 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
 
 
     
-    print('TOP 1 Executable', top_hit/ len(predictions))
-    print('Gen Executable', gen_executable_cnt/ len(predictions))
-    print('Final Executable', final_executable_cnt/ len(predictions))
+    print('TOP 1 Executable', top_hit/ num_predictions)
+    print('Gen Executable', gen_executable_cnt/ num_predictions)
+    print('Final Executable', final_executable_cnt/ num_predictions)
 
-    official_results_file = os.path.join(dirname,f'{filename}_output.json')
+    
     dump_json(official_lines, official_results_file)
 
     # write failed predictions
-    dump_json(failed_preds,os.path.join(dirname,f'{filename}_gen_failed_results.json'),indent=4)
+    dump_json(failed_preds,failed_file,indent=4)
     dump_json({
-        'TOP 1 Executable': top_hit/ len(predictions),
-        'Gen Executable': gen_executable_cnt/ len(predictions),
-        'Final Executable': final_executable_cnt/ len(predictions)
+        'TOP 1 Executable': top_hit/ num_predictions,
+        'Gen Executable': gen_executable_cnt/ num_predictions,
+        'Final Executable': final_executable_cnt/ num_predictions
     }, os.path.join(dirname,f'{filename}_statistics.json'),indent=4)
 
     # # evaluate
