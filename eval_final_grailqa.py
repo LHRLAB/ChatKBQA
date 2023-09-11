@@ -417,8 +417,8 @@ def try_relation(d,rel_map):
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
     exprs = [" ".join(s) for s in combinations][:200]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
+    start_time = time.time()
     for query_expr in query_exprs:
-        start_time = time.time()
         try:
             # invalid sexprs, may leads to infinite loops
             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
@@ -450,7 +450,7 @@ def try_relation(d,rel_map):
                     denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
         except:
             denotation = []
-            elapsed_time = time.time() - start_time
+        elapsed_time = time.time() - start_time
         if len(denotation) != 0 or elapsed_time > 60:
             break              
     if len(denotation) == 0 :
