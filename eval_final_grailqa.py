@@ -414,8 +414,8 @@ def try_relation(d,rel_map):
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
-    combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:200]
+    combinations = [list(comb) for comb in itertools.islice(itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr]),200)]
+    exprs = [" ".join(s) for s in combinations]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     start_time = time.time()
     for query_expr in query_exprs:
