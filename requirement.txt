@@ -28,3 +28,4 @@ flask
 ptvsd
 wandb
 simcse
+wandb

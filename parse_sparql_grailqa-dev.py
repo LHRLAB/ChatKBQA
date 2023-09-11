@@ -615,45 +615,44 @@ class Parser:
 def augment_with_s_expr_grailqa(split, check_execute_accuracy=False):
     """augment original grailqa datasets with s-expression"""
     if split == 'train':
-        dataset_train = load_json(f'data/GrailQA/origin/grailqa_v1.0_train.json')
-        dataset_dev = load_json(f'data/GrailQA/origin/grailqa_v1.0_dev.json')
-        dataset = dataset_train + dataset_dev
-
-        total_num = 0
-        hit_num = 0
-        execute_hit_num = 0
-        for i,data in enumerate(dataset):
-            total_num += 1
-            hit_num += 1
-            if check_execute_accuracy:
-                execute_right_flag = False
-                try:
-                    execute_ans = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(data["s_expression"]))]
-                    gold_ans = [x['answer_argument'] for x in data['answer']]    
-                    if set(execute_ans) == set(gold_ans):
-                        execute_hit_num +=1
-                        execute_right_flag = True
-                    if not execute_right_flag:
-                        # print(data["s_expression"])
-                        pass
-                except Exception:
-                    if not execute_right_flag:
-                        # print(data["s_expression"])
-                        pass
-            dataset[i]['sparql_query']=lisp_to_sparql(data["s_expression"])
-            if (i+1)%100==0:
-                print(f'In the First {i+1} questions, S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {i+1}')
-                if check_execute_accuracy:    
-                    print(f'In the First {i+1} questions, Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {i+1}', )
-
-        print(f'S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {len(dataset)}')
-        print(f'Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {len(dataset)}', )
+        dataset = load_json(f'data/GrailQA-dev/origin/grailqa_v1.0_train.json')
     else:
-        dataset = load_json(f'data/GrailQA/origin/grailqa_v1.0_test_public.json')    
-    sexpr_dir = 'data/GrailQA/sexpr'
+        dataset = load_json(f'data/GrailQA-dev/origin/grailqa_v1.0_dev.json')   
+
+    total_num = 0
+    hit_num = 0
+    execute_hit_num = 0
+    for i,data in enumerate(dataset):
+        total_num += 1
+        hit_num += 1
+        if check_execute_accuracy:
+            execute_right_flag = False
+            try:
+                execute_ans = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in execute_query_with_odbc(lisp_to_sparql(data["s_expression"]))]
+                gold_ans = [x['answer_argument'] for x in data['answer']]    
+                if set(execute_ans) == set(gold_ans):
+                    execute_hit_num +=1
+                    execute_right_flag = True
+                if not execute_right_flag:
+                    # print(data["s_expression"])
+                    pass
+            except Exception:
+                if not execute_right_flag:
+                    # print(data["s_expression"])
+                    pass
+        dataset[i]['sparql_query']=lisp_to_sparql(data["s_expression"])
+        if (i+1)%100==0:
+            print(f'In the First {i+1} questions, S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {i+1}')
+            if check_execute_accuracy:    
+                print(f'In the First {i+1} questions, Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {i+1}', )
+
+    print(f'S-Expression Gen rate [{split}]: {hit_num}, {total_num}, {hit_num/total_num}, {len(dataset)}')
+    print(f'Execute right rate [{split}]: {execute_hit_num}, {total_num}, {execute_hit_num/total_num}, {len(dataset)}', )
+ 
+    sexpr_dir = 'data/GrailQA-dev/sexpr'
     if not os.path.exists(sexpr_dir):
         os.makedirs(sexpr_dir)
-    dump_json(dataset, f'{sexpr_dir}/GrailQA.{split}.expr.json', indent=4)
+    dump_json(dataset, f'{sexpr_dir}/GrailQA-dev.{split}.expr.json', indent=4)
 
 
 def parse_grailqa_sparql(check_execute_accuracy=False):

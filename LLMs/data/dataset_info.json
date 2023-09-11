@@ -52,5 +52,23 @@
       "response": "output",
       "history": "history"
     }
+  },
+  "GrailQA-dev_Freebase_NQ_train": {
+    "script_url": "GrailQA-dev_Freebase_NQ_train",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "GrailQA-dev_Freebase_NQ_test": {
+    "script_url": "GrailQA-dev_Freebase_NQ_test",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
   }
 }

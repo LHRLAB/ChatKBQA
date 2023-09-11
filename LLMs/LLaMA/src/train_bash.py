@@ -1,3 +1,5 @@
+import os
+os.environ["WANDB_DISABLED"] = "true"
 from llmtuner import run_exp
 
 
