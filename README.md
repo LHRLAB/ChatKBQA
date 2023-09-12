@@ -297,7 +297,7 @@ CUDA_VISIBLE_DEVICES=4 nohup python -u eval_final_grailqa.py --dataset GrailQA -
 
 Evaluate KBQA result with entity-retrieval and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=2 nohup python -u eval_final_grailqa.py --dataset GrailQA-dev --pred_file Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=2 nohup python -u eval_final_grailqa-dev.py --dataset GrailQA-dev --pred_file Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
 
 <!-- Evaluate KBQA result with golden-entities and relation-retrieval:
