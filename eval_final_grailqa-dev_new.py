@@ -7,11 +7,10 @@ from generation.cwq_evaluate import cwq_evaluate_valid_results
 from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results
 from components.utils import dump_json, load_json
 from tqdm import tqdm
-from executor.sparql_executor_grailqa import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter, get_label_with_odbc
+from executor.sparql_executor_grailqa import execute_query_with_odbc, get_2hop_relations_with_odbc_wo_filter
 from utils.logic_form_util import lisp_to_sparql
 import re
 import os
-import time
 from entity_retrieval import surface_index_memory
 import difflib
 import itertools
@@ -45,7 +44,7 @@ def _parse_args():
     parser.add_argument('--server_port', default=None, help='server port for debugging')
     parser.add_argument('--qid',default=None,type=str, help='single qid for debug, None by default' )
     parser.add_argument('--test_batch_size', default=2)
-    parser.add_argument('--dataset', default='GrailQA-dev', type=str)
+    parser.add_argument('--dataset', default='GrailQA-dev', type=str, help='dataset type, can be `CWQ、`WebQSP`')
     parser.add_argument('--beam_size', default=50, type=int)
     parser.add_argument('--golden_ent', default=False, action='store_true')
 
@@ -172,7 +171,7 @@ def denormalize_s_expr_new(normed_expr,
                                 else:       
                                     search = True                         
                         if search:
-                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=3)
+                            facc1_cand_entities = surface_index.get_indexrange_entity_el_pro_one_mention(cur_seg,top_k=50)
                             if facc1_cand_entities:
                                 temp = []
                                 for key in list(facc1_cand_entities.keys())[1:]:
@@ -230,18 +229,16 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
         return 'null', []
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
-    for query_expr in query_exprs[:10]:
+    for query_expr in query_exprs[:500]:
         try:
             # invalid sexprs, may leads to infinite loops
             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
                 denotation = []
             else:
-
                 sparql_query = lisp_to_sparql(query_expr)
-
                 denotation = execute_query_with_odbc(sparql_query)
-                denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
-                if (len(denotation) == 0 or denotation == ["0"]) and sparql_query.count('WHERE') == 1:
+                denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+                if len(denotation) == 0 :
                     
                     ents = set ()
                     
@@ -260,18 +257,14 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
                             clauses = clauses[:i+1] + addline + clauses[i+1:]
                             break
                     sparql_query = '\n'.join(clauses)
-                    # print("start")
-                    # print(sparql_query)
                     denotation = execute_query_with_odbc(sparql_query)
-                    # print("end")
-                    denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]                  
+                    denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]                    
         except:
             denotation = []
-        if (len(denotation) != 0 and denotation != ["0"]) :
+        if len(denotation) != 0 :
             break  
-    if len(denotation) == 0 or denotation == ["0"]:
+    if len(denotation) == 0 :
         query_expr = query_exprs[0]
-        denotation = []
     
     return query_expr, denotation
 
@@ -279,8 +272,7 @@ def execute_normed_s_expr_from_label_maps(normed_expr,
 def execute_normed_s_expr_from_label_maps_rel(normed_expr, 
                                         entity_label_map,
                                         type_label_map,
-                                        surface_index,
-                                        rel_map
+                                        surface_index
                                         ):
     try:
         denorm_sexprs = denormalize_s_expr_new(normed_expr, 
@@ -293,201 +285,52 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in denorm_sexprs[:5]:
-        query_expr, denotation, score = try_relation(d,rel_map)
-        if (len(denotation) != 0 and denotation != ["0"]) :
+    for d in tqdm(denorm_sexprs[:5]):
+        query_expr, denotation = try_relation(d)
+        if len(denotation) != 0 :
             break          
         
-    if len(denotation) == 0 or denotation == ["0"]:
+    if len(denotation) == 0 :
         query_expr = query_exprs[0]
-        denotation = []
-        score = 0
     
-    return query_expr, denotation, score
+    return query_expr, denotation
 
-# def try_relation(d,rel_map):
-#     ent_list = set()
-#     rel_list = set()
-#     denorm_sexpr = d.split(' ')
-#     for item in denorm_sexpr:
-#         if item.startswith('m.'):
-#             ent_list.add(item)
-#         elif '.' in item:
-#             rel_list.add(item)
-#     ent_list = list(ent_list)
-#     rel_list = list(rel_list)
-#     cand_rels = set()
-#     for ent in ent_list:
-#         in_rels, out_rels, _ = get_2hop_relations_with_odbc_wo_filter(ent)
-#         cand_rels = cand_rels | set(in_rels) | set(out_rels)
-#     cand_rels = list(cand_rels)
-#     if len(cand_rels) == 0:
-#         return d.replace('( ','(').replace(' )', ')'), []
-#     similarities = model.similarity(rel_list, cand_rels)
-#     change = dict()
-#     for i, rel in enumerate(rel_list):
-#         merged_list = list(zip(cand_rels, similarities[i]))
-#         sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
-#         change_rel = []
-#         for s in sorted_list:
-#             if s[1] > 0.01:
-#                 change_rel.append(s[0])
-#         change[rel] = change_rel[:3]
-#     for i, item in enumerate(denorm_sexpr):
-#         if item in rel_list:
-#             denorm_sexpr[i] = change[item]
-#     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-#     exprs = [" ".join(s) for s in combinations][:10]
-#     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
-#     for query_expr in query_exprs:
-#         try:
-#             # invalid sexprs, may leads to infinite loops
-#             if 'OR' in query_expr or 'WITH' in query_expr or 'PLUS' in query_expr:
-#                 denotation = []
-#             else:
-#                 sparql_query = lisp_to_sparql(query_expr)
-#                 denotation = execute_query_with_odbc(sparql_query)
-#                 denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
-#                 if len(denotation) == 0 :
-                    
-#                     ents = set ()
-                    
-#                     for item in sparql_query.replace('(', ' ( ').replace(')', ' ) ').split(' '):
-#                         if item.startswith("ns:m."):
-#                             ents.add(item)
-#                     addline = []
-#                     for i, ent in enumerate(list(ents)):
-#                         addline.append(f'{ent} rdfs:label ?en{i} . ')
-#                         addline.append(f'?ei{i} rdfs:label ?en{i} . ')
-#                         addline.append(f'FILTER (langMatches( lang(?en{i}), "EN" ) )')
-#                         sparql_query = sparql_query.replace(ent, f'?ei{i}')
-#                     clauses = sparql_query.split('\n')
-#                     for i, line in enumerate(clauses):
-#                         if line == "FILTER (!isLiteral(?x) OR lang(?x) = '' OR langMatches(lang(?x), 'en'))":
-#                             clauses = clauses[:i+1] + addline + clauses[i+1:]
-#                             break
-#                     sparql_query = '\n'.join(clauses)
-#                     denotation = execute_query_with_odbc(sparql_query)
-#                     denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
-#         except:
-#             denotation = []
-#         if len(denotation) != 0 :
-#             break              
-#     if len(denotation) == 0 :
-#         query_expr = query_exprs[0]      
-#     return query_expr, denotation  
-
-def try_relation(d,rel_map):
-    rel_map,rels_map=rel_map[0],rel_map[1]
+def try_relation(d):
     ent_list = set()
     rel_list = set()
-    type_list = set()
     denorm_sexpr = d.split(' ')
     for item in denorm_sexpr:
         if item.startswith('m.'):
             ent_list.add(item)
-        elif '.' in item and item.replace('base.','').count('.')>1:
+        elif '.' in item:
             rel_list.add(item)
-        elif '.' in item and item.replace('base.','').count('.')==1:
-            type_list.add(item)
     ent_list = list(ent_list)
     rel_list = list(rel_list)
-    type_list = list(type_list)
     cand_rels = set()
     for ent in ent_list:
         in_rels, out_rels, _ = get_2hop_relations_with_odbc_wo_filter(ent)
         cand_rels = cand_rels | set(in_rels) | set(out_rels)
     cand_rels = list(cand_rels)
-    if len(cand_rels) == 0 or len(rel_list) == 0:
-        return d.replace('( ','(').replace(' )', ')'), [],0
+    if len(cand_rels) == 0:
+        return d.replace('( ','(').replace(' )', ')'), []
     similarities = model.similarity(rel_list, cand_rels)
-
     change = dict()
     for i, rel in enumerate(rel_list):
         merged_list = list(zip(cand_rels, similarities[i]))
         sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
         change_rel = []
         for s in sorted_list:
-            if s[1] > 0.6 and s[0].count('.')==rel.count('.'):
+            if s[1] > 0.4:
                 change_rel.append(s[0])
         if len(change_rel)==0:
-            for s in sorted_list:
-                if s[1] > 0.6:
-                    change_rel.append(sorted_list[0][0])    
-        if len(change_rel)==0:
-            change_rel.append(s[0])          
-        change[rel] = change_rel
-
-    rel_maps = set()
-    for key in change.keys():
-        for rel in change[key]:
-            if '.'.join(rel.split('.')[:-1]) in rel_map:
-                rel_maps.add('.'.join(rel.split('.')[:-1]))
-    rel_maps = list(rel_maps)
-    if len(rel_maps) == 0 or len(type_list) == 0:
-        return d.replace('( ','(').replace(' )', ')'), [] ,0   
-    similarities_type = model.similarity(type_list, rel_maps)
-
-    for i, rel in enumerate(type_list):
-        merged_list = list(zip(rel_maps, similarities_type[i]))
-        sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)
-        change_rel = []
-        for s in sorted_list:
-            if s[1] > 0.6 and s[0].count('.')==rel.count('.'):
-                change_rel.append(s[0])
-        if len(change_rel)==0:
-            for s in sorted_list:
-                if s[1] > 0.6:
-                    change_rel.append(sorted_list[0][0])    
-        if len(change_rel)==0:
-            change_rel.append(s[0])          
-        change[rel] = change_rel
+            change_rel.append(sorted_list[0][0]) 
+        change[rel] = change_rel[:10]
     for i, item in enumerate(denorm_sexpr):
-        if item in rel_list or item in type_list:
+        if item in rel_list:
             denorm_sexpr[i] = change[item]
-    combinations = [list(comb) for comb in itertools.islice(itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr]),10000)]
-    exprs = [" ".join(s) for s in combinations]
-    if len(exprs) == 0:
-        return d.replace('( ','(').replace(' )', ')'), [],0     
-    similarities_lf = model.similarity([d], exprs)
-    merged_list = list(zip(exprs, similarities_lf[0]))
-    sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)    
-    exprs = [s[0] for s in sorted_list]
-    scores = [s[1] for s in sorted_list]
-    
-    score_dict = dict()
-    query_exprs = []
-    
-    for i, e in enumerate(exprs):
-        ent_list = set()
-        rel_list = set()
-        type_list = set()
-        denorm_sexpr = e.split(' ')
-        for item in denorm_sexpr:
-            if item.startswith('m.'):
-                ent_list.add(item)
-            elif '.' in item and item.replace('base.','').count('.')>1:
-                rel_list.add(item)
-            elif '.' in item and item.replace('base.','').count('.')==1:
-                type_list.add(item)  
-        ent_list = list(ent_list)
-        rel_list = list(rel_list)
-        type_list = list(type_list)
-        true_type_list = set()
-        test_type_list = set()
-        for rel in rel_list:
-            true_type_list.add(rel.split('.')[0])
-        for rel in type_list:
-            test_type_list.add(rel.split('.')[0])
-        if test_type_list.issubset(true_type_list):
-            query_exprs.append(e.replace('( ','(').replace(' )', ')'))
-            score_dict[e.replace('( ','(').replace(' )', ')')] = scores[i]
-    if len(query_exprs) == 0:
-        return d.replace('( ','(').replace(' )', ')'), [],0   
-    # query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
-    # score_dict = {q:k for (q,k) in zip(query_exprs,scores)}
-    
-    start_time = time.time()
+    combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
+    exprs = [" ".join(s) for s in combinations][:100]
+    query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
             # invalid sexprs, may leads to infinite loops
@@ -496,8 +339,8 @@ def try_relation(d,rel_map):
             else:
                 sparql_query = lisp_to_sparql(query_expr)
                 denotation = execute_query_with_odbc(sparql_query)
-                denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
-                if len(denotation) == 0 or denotation == ["0"]:
+                denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
+                if len(denotation) == 0 :
                     
                     ents = set ()
                     
@@ -517,17 +360,14 @@ def try_relation(d,rel_map):
                             break
                     sparql_query = '\n'.join(clauses)
                     denotation = execute_query_with_odbc(sparql_query)
-                    denotation = [s.replace('http://rdf.freebase.com/ns/','') if type(s) == str else str(s) for s in denotation]
+                    denotation = [res.replace("http://rdf.freebase.com/ns/",'') for res in denotation]
         except:
             denotation = []
-        elapsed_time = time.time() - start_time
-        if (len(denotation) != 0 and denotation != ["0"]) or elapsed_time > 300:
+        if len(denotation) != 0 :
             break              
-    if len(denotation) == 0 or denotation == ["0"]:
-        query_expr = query_exprs[0]
-        denotation = []    
-    return query_expr, denotation, float(score_dict[query_expr]) 
-
+    if len(denotation) == 0 :
+        query_expr = query_exprs[0]      
+    return query_expr, denotation  
 
 def aggressive_top_k_eval_new(split, predict_file, dataset):
     """Run top k predictions, using linear origin map"""
@@ -560,55 +400,24 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         train_type_map = load_json(f"data/GrailQA-dev/generation/label_maps/GrailQA-dev_train_type_label_map.json")
         train_type_map = {l.lower():t for t,l in train_type_map.items()}
     
-    rel_maps =  load_json(f"ontology/domain_dict")
-    rel_map = set()
-    rels_map = set()
-    for key in rel_maps.keys():
-        for item in rel_maps[key]:
-            if item.replace('base.','').count('.')==1:
-                rel_map.add(item)
-            elif item.replace('base.','').count('.')==2:
-                rels_map.add(item)
-    rel_map = [list(rel_map),list(rels_map)]
-    
-    official_results_file = os.path.join(dirname,f'{filename}_output.json')
-    # if os.path.exists(official_results_file):
-    #     official_lines = load_json(official_results_file)
-    #     # max_index = max([int(key[5:]) for key in official_lines.keys()])
-    # else:
-    official_lines = dict()
-        # max_index = -1
-    
-    failed_file = os.path.join(dirname,f'{filename}_gen_failed_results.json')
-    # if os.path.exists(failed_file):
-    #     failed_preds = load_json(failed_file)  
-    # else:
-    failed_preds = []
-    
-    
     
     surface_index = surface_index_memory.EntitySurfaceIndexMemory(
         "data/common_data/facc1/entity_list_file_freebase_complete_all_mention", "data/common_data/facc1/surface_map_file_freebase_complete_all_mention",
         "data/common_data/facc1/freebase_complete_all_mention")
     
+    ex_cnt = 0
     top_hit = 0
+    lines = []
+    official_lines = []
+    failed_preds = []
 
     gen_executable_cnt = 0
     final_executable_cnt = 0
     processed = 0
-    num_predictions = 0
-    beam = 0
-    bad = 0
     for (pred,gen_feat) in tqdm(zip(predictions,gen_dataset), total=len(gen_dataset), desc=f'Evaluating {split}'):
+        
         denormed_pred = []
         qid = gen_feat['ID']
-        # if int(qid[5:]) <= max_index:
-        #     continue
-        # else:
-        if gen_feat['sexpr'] == "(COUNT (AND cvg.computer_videogame (JOIN (R cvg.cvg_designer.games_designed) m.02hptvh)))":
-            print()
-        
-        num_predictions += 1
             
         if args.golden_ent:
             entity_label_map = {v.lower(): k for k, v in list(gen_feat['gold_entity_map'].items())}
@@ -629,18 +438,27 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
             
             denormed_pred.append(lf)
 
+            if rank == 0 and lf.lower() ==gen_feat['sexpr'].lower():
+                ex_cnt +=1
             
             if answers:
                 executable_index = rank
-                official_lines[qid]={
-                    'logical_form':lf,
-                    'answer':answers
-                }
-                dump_json(official_lines, official_results_file)
-                if answers != gen_feat['answer']:
-                    final = (lf,gen_feat['sexpr'])
-                else:
-                    bad += 1
+                lines.append({
+                    'qid': qid, 
+                    'execute_index': executable_index,
+                    'logical_form': lf, 
+                    'answer':answers,
+                    'gt_sexpr': gen_feat['sexpr'], 
+                    'gt_normed_sexpr': pred['gen_label'],
+                    'pred': pred, 
+                    'denormed_pred':denormed_pred
+                })
+
+                official_lines.append({
+                    "QuestionId": qid,
+                    "Answers": answers
+                })
+               
                 if rank==0:
                     top_hit +=1
                 break
@@ -653,55 +471,47 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
         if executable_index is not None:
             # found executable query from generated model
             gen_executable_cnt +=1
-        ############
         else:
             denormed_pred = []
-            answer_dict = dict()
+            
             # find the first executable lf
             for rank, p in enumerate(pred['predictions']):
-                lf, answers, score = execute_normed_s_expr_from_label_maps_rel(
+                lf, answers = execute_normed_s_expr_from_label_maps_rel(
                                                     p, 
                                                     entity_label_map,
                                                     train_type_map,
-                                                    surface_index,
-                                                    rel_map)
+                                                    surface_index)
+
                 answers = [date_post_process(ans) for ans in list(answers)]
                 
-                    
+                denormed_pred.append(lf)
+
+                if rank == 0 and lf.lower() ==gen_feat['sexpr'].lower():
+                    ex_cnt +=1
                 
                 if answers:
-                    denormed_pred.append(lf)
                     executable_index = rank
-                    answer_dict[lf] = answers
+                    lines.append({
+                        'qid': qid, 
+                        'execute_index': executable_index,
+                        'logical_form': lf, 
+                        'answer':answers,
+                        'gt_sexpr': gen_feat['sexpr'], 
+                        'gt_normed_sexpr': pred['gen_label'],
+                        'pred': pred, 
+                        'denormed_pred':denormed_pred
+                    })
+
+                    official_lines.append({
+                        "QuestionId": qid,
+                        "Answers": answers
+                    })
+                
                     if rank==0:
                         top_hit +=1
-
-            name_pred_dict = dict()
-            name_pred = []
-            denormed_pred = list(set(denormed_pred))
-            for d in denormed_pred:
-                items = d.replace('(','( ').replace(')',' )').split(' ')
-                for x, item in enumerate(items):
-                    if item.startswith('m.'):
-                        items[x]='[ '+get_label_with_odbc(item)+' ]'
-                name_pred_dict[' '.join(items)] = d
-                name_pred.append(' '.join(items))
-            
-            
-            
+                    break
+                    
             if executable_index is not None:
-                similarities = model.similarity(gen_feat['question'], name_pred)
-                merged_list = list(zip(name_pred, similarities))
-                sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True) 
-                official_lines[qid]={
-                    'logical_form':name_pred_dict[sorted_list[0][0]],
-                    'answer':answer_dict[name_pred_dict[sorted_list[0][0]]]
-                }
-                if official_lines[qid]['answer'] != gen_feat['answer']:
-                    final = (official_lines[qid]['logical_form'],gen_feat['sexpr'])
-                else:
-                    bad += 1
-                dump_json(official_lines, official_results_file)
                 # found executable query from generated model
                 gen_executable_cnt +=1
                 
@@ -712,42 +522,47 @@ def aggressive_top_k_eval_new(split, predict_file, dataset):
                                 'gt_normed_sexpr': pred['gen_label'],
                                 'pred': pred, 
                                 'denormed_pred':denormed_pred})
-                dump_json(failed_preds,failed_file,indent=4)
-        ############
+        
             
         if executable_index is not None:
             final_executable_cnt+=1
         
         processed+=1
-        if processed%10==0:
-            print(f'Processed:{processed}, gen_executable_cnt:{gen_executable_cnt}, em:{bad}')
-        # if processed==20:
+        if processed%100==0:
+            print(f'Processed:{processed}, gen_executable_cnt:{gen_executable_cnt}')
+        # if processed==5:
         #     break
 
 
-    
-    print('TOP 1 Executable', top_hit/ num_predictions)
-    print('Gen Executable', gen_executable_cnt/ num_predictions)
-    print('Final Executable', final_executable_cnt/ num_predictions)
+        
+    print('STR Match', ex_cnt/ len(predictions))
+    print('TOP 1 Executable', top_hit/ len(predictions))
+    print('Gen Executable', gen_executable_cnt/ len(predictions))
+    print('Final Executable', final_executable_cnt/ len(predictions))
 
-    
-    dump_json(official_lines, official_results_file)
+    result_file = os.path.join(dirname,f'{filename}_gen_sexpr_results.json')
+    official_results_file = os.path.join(dirname,f'{filename}_gen_sexpr_results_official_format.json')
+    dump_json(lines, result_file, indent=4)
+    dump_json(official_lines, official_results_file, indent=4)
 
     # write failed predictions
-    dump_json(failed_preds,failed_file,indent=4)
+    dump_json(failed_preds,os.path.join(dirname,f'{filename}_gen_failed_results.json'),indent=4)
     dump_json({
-        'TOP 1 Executable': top_hit/ num_predictions,
-        'Gen Executable': gen_executable_cnt/ num_predictions,
-        'Final Executable': final_executable_cnt/ num_predictions
+        'STR Match': ex_cnt/ len(predictions),
+        'TOP 1 Executable': top_hit/ len(predictions),
+        'Gen Executable': gen_executable_cnt/ len(predictions),
+        'Final Executable': final_executable_cnt/ len(predictions)
     }, os.path.join(dirname,f'{filename}_statistics.json'),indent=4)
 
-    # # evaluate
-    # if dataset == "GrailQA":
-    #     args.pred_file = result_file
-    #     cwq_evaluate_valid_results(args)
-    # else:
-    #     args.pred_file = official_results_file
-    #     webqsp_evaluate_valid_results(args)
+    # evaluate
+    if dataset == "CWQ":
+        args.pred_file = result_file
+        cwq_evaluate_valid_results(args)
+    else:
+        args.pred_file = official_results_file
+        webqsp_evaluate_valid_results(args)
+        
+
 
 if __name__=='__main__':
     """go down the top-k list to get the first executable locial form"""

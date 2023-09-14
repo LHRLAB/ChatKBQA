@@ -564,7 +564,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             cursor.execute(query1)
             rows = cursor.fetchall()
     except Exception:
-        print(f"Query Execution Failed:{query1}")
+        # print(f"Query Execution Failed:{query1}")
         rows=[]
         # exit(0)
 
@@ -620,7 +620,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             cursor.execute(query2)
             rows = cursor.fetchall()
     except Exception:
-        print(f"Query Execution Failed:{query2}")
+        # print(f"Query Execution Failed:{query2}")
         rows = []
         # exit(0)
     
@@ -672,7 +672,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             cursor.execute(query3)
             rows = cursor.fetchall()
     except Exception:
-        print(f"Query Execution Failed:{query3}")
+        # print(f"Query Execution Failed:{query3}")
         rows = []
         # exit(0)
     
@@ -727,7 +727,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             cursor.execute(query4)
             rows = cursor.fetchall()
     except Exception:
-        print(f"Query Execution Failed:{query4}")
+        # print(f"Query Execution Failed:{query4}")
         rows = []
         # exit(0)
 
