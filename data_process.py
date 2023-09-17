@@ -1,14 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-'''
-@File    :    data_process.py
-@Time    :    2022/06/12 14:26:37
-@Author  :    Xixin Hu
-@Version :    1.0
-@Contact :    xixinhu97@foxmail.com
-@Desc    :    
-'''
-
 from collections import defaultdict
 import random
 from typing import Dict, List
@@ -37,8 +26,8 @@ from executor.sparql_executor import (
 def _parse_args():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--action',default='get_type_label_map',help='Action to operate')
-    parser.add_argument('--dataset', default='GrailQA', help='dataset to perform entity linking, should be CWQ or WebQSP')
+    parser.add_argument('--action',default='merge_all',help='Action to operate')
+    parser.add_argument('--dataset', default='WebQSP', help='dataset to perform entity linking, should be CWQ or WebQSP')
     parser.add_argument('--split', default='train', help='split to operate on') # the split file: ['dev','test','train']
     
     
@@ -313,11 +302,8 @@ def merge_all_data_for_logical_form_generation(dataset, split):
             qid = example["ID"]
         elif dataset=='WebQSP':
             qid = example['QuestionId']
-        elif dataset=='GrailQA' or 'GrailQA-dev':
-            qid = example['qid']
-        question = example['question'] if dataset=='CWQ' or 'GrailQA' or 'GrailQA-dev' else example['ProcessedQuestion']
+        question = example['question'] if dataset=='CWQ' else example['ProcessedQuestion']
         comp_type = example["compositionality_type"] if dataset=='CWQ' else None                
-        
         
         if dataset=='CWQ':
             sexpr = example['SExpr']
@@ -342,50 +328,36 @@ def merge_all_data_for_logical_form_generation(dataset, split):
             sexpr = parses[shortest_idx]['SExpr']
             sparql = parses[shortest_idx]['Sparql']
             answer = [x['AnswerArgument'] for x in parses[shortest_idx]['Answers']]
-        elif dataset=='GrailQA':
-            if split == 'test':
-                sexpr = example['question']
-                sparql = example['question']
-                answer = []
-            else:                
-                sexpr = example['s_expression']
-                sparql = example['sparql_query']
-                answer = [x['answer_argument'] for x in example['answer']]
-        elif dataset=='GrailQA-dev':              
-            sexpr = example['s_expression']
-            sparql = example['sparql_query']
-            answer = [x['answer_argument'] for x in example['answer']]
                 
         gold_ent_label_map = {}
         gold_rel_label_map = {}
         gold_type_label_map = {}
         normed_sexpr = example['question']
             
-        if not (dataset == 'GrailQA' and split =='test'):
-            normed_sexpr = vanilla_sexpr_linearization_method(sexpr)
-            gold_entities = extract_mentioned_entities_from_sparql(sparql)
-            gold_relations = extract_mentioned_relations_from_sparql(sparql)
+        normed_sexpr = vanilla_sexpr_linearization_method(sexpr)
+        gold_entities = extract_mentioned_entities_from_sparql(sparql)
+        gold_relations = extract_mentioned_relations_from_sparql(sparql)
+        
+        for entity in gold_entities:
+            is_type = False
+            entity_types = get_types_with_odbc(entity)
+            if "type.type" in entity_types:
+                is_type = True
+
+            entity_label = get_label_with_odbc(entity)
+            if entity_label is not None:
+                gold_ent_label_map[entity] = entity_label
+                global_ent_label_map[entity] = entity_label
+
+            if is_type and entity_label is not None:
+                gold_type_label_map[entity] = entity_label
+                global_type_label_map[entity] = entity_label
+
             
-            for entity in gold_entities:
-                is_type = False
-                entity_types = get_types_with_odbc(entity)
-                if "type.type" in entity_types:
-                    is_type = True
-
-                entity_label = get_label_with_odbc(entity)
-                if entity_label is not None:
-                    gold_ent_label_map[entity] = entity_label
-                    global_ent_label_map[entity] = entity_label
-
-                if is_type and entity_label is not None:
-                    gold_type_label_map[entity] = entity_label
-                    global_type_label_map[entity] = entity_label
-
-                
-            for rel in gold_relations:
-                linear_rel = _textualize_relation(rel)
-                gold_rel_label_map[rel] = linear_rel
-                global_rel_label_map[rel] = linear_rel
+        for rel in gold_relations:
+            linear_rel = _textualize_relation(rel)
+            gold_rel_label_map[rel] = linear_rel
+            global_rel_label_map[rel] = linear_rel
 
         
         new_example['ID']=qid
@@ -827,10 +799,6 @@ if __name__=='__main__':
             extract_type_label_from_dataset(dataset=args.dataset, split=args.split)
         elif args.dataset == "WebQSP":
             extract_type_label_from_dataset_webqsp(dataset=args.dataset, split=args.split)
-        elif args.dataset == "GrailQA":
-            extract_type_label_from_dataset_grailqa(dataset=args.dataset, split=args.split)
-        elif args.dataset == "GrailQA-dev":
-            extract_type_label_from_dataset_grailqa_dev(dataset=args.dataset, split=args.split)
     else:
         print('usage: data_process.py action [--dataset DATASET] --split SPLIT ')
 

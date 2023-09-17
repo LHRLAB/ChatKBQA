@@ -165,6 +165,7 @@ LLMs/data/WebQSP*
 LLMs/data/CWQ*
 LLMs/data/GrailQA*
 Reading/*
-train*
+train_*.txt
 wandb/*
-pred*
+pred*.txt
+pred*.json

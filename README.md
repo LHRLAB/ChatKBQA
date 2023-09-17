@@ -83,41 +83,14 @@ ChatKBQA/
             └── ComplexWebQuestions_test.json                              
 ```
 
-### GrailQA
 
-Download the GrailQA dataset [here](https://dki-lab.github.io/GrailQA/) and put them under `data/GrailQA/origin`. The dataset files should be named as `grailqa_v1.0_test_public[train,dev].json`.
-
-```
-ChatKBQA/
-└── data/
-    ├── GrailQA                 
-        ├── origin                    
-            ├── grailqa_v1.0_train.json                   
-            ├── grailqa_v1.0_dev.json      
-            └── grailqa_v1.0_test_public.json                              
-```
-
-```
-ChatKBQA/
-└── data/
-    ├── GrailQA-dev                 
-        ├── origin                    
-            ├── grailqa_v1.0_train.json                   
-            ├── grailqa_v1.0_dev.json      
-            └── grailqa_v1.0_test_public.json                              
-```
-
-## Main Processing
+## Data Processing
 
 (1) **Parse SPARQL queries to S-expressions** 
 
 - WebQSP: Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train].json`. 
 
 - CWQ: Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
-
-- GrailQA: Run `python parse_sparql_grailqa.py` and the augmented dataset files are saved as `data/GrailQA/sexpr/GrailQA.test[train].json`.
-
-- GrailQA-dev: Run `python parse_sparql_grailqa-dev.py` and the augmented dataset files are saved as `data/GrailQA-dev/sexpr/GrailQA-dev.test[train].json`.
  
 
 (2) **Prepare data for training and evaluation**
@@ -134,18 +107,6 @@ Run `python data_process.py --action merge_all --dataset CWQ --split test[train]
 
 Run `python data_process.py --action get_type_label_map --dataset CWQ --split train`. The merged data file will be saved as `data/CWQ/generation/label_maps/CWQ_train_type_label_map.json`.
 
-- GrailQA: 
-
-Run `python data_process.py --action merge_all --dataset GrailQA --split test[train]` The merged data file will be saved as `data/GrailQA/generation/merged/GrailQA_test[train].json`.
-
-Run `python data_process.py --action get_type_label_map --dataset GrailQA --split train`. The merged data file will be saved as `data/GrailQA/generation/label_maps/GrailQA_train_type_label_map.json`.
-
-- GrailQA-dev: 
-
-Run `python data_process.py --action merge_all --dataset GrailQA-dev --split test[train]` The merged data file will be saved as `data/GrailQA-dev/generation/merged/GrailQA-dev_test[train].json`.
-
-Run `python data_process.py --action get_type_label_map --dataset GrailQA-dev --split train`. The merged data file will be saved as `data/GrailQA-dev/generation/label_maps/GrailQA-dev_train_type_label_map.json`.
-
 
 (3) **Prepare data for LLM model**
 
@@ -153,40 +114,18 @@ Run `python data_process.py --action get_type_label_map --dataset GrailQA-dev --
 
 - CWQ: Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train]/examples.json`.
 
-- GrailQA: Run `python process_NQ.py --dataset_type GrailQA` The merged data file will be saved as `LLMs/data/GrailQA_Freebase_NQ_test[train]/examples.json`.
 
-- GrailQA-dev: Run `python process_NQ.py --dataset_type GrailQA-dev` The merged data file will be saved as `LLMs/data/GrailQA-dev_Freebase_NQ_test[train]/examples.json`.
+## Fine-tuning, Retrieval and Evaluation
 
-(4) **Train and test LLM model for Logical Form Generation**
+The following is an example of LLaMa2-13b fine-tuning and retrieval, we also provide a variety of LLMs (including LLaMa2-7b, ChatGLM2-6b) fine-tuning instructions.
+
+(1) **Train and test LLM model for Logical Form Generation**
 
 - WebQSP: 
 
 Train LLMs for Logical Form Generation:
 ```bash
 CUDA_VISIBLE_DEVICES=3 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
-```
-
-<!-- ```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-7b-hf --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-7b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_LLaMA2-7b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
-``` -->
-
-
-
-<!-- ```bash
-CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path THUDM/chatglm2-6b --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template chatglm2  --finetuning_type lora --lora_target query_key_value --output_dir Reading/ChatGLM2-6b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_ChatGLM2-6b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
-``` -->
-
-<!-- ```bash
-CUDA_VISIBLE_DEVICES=1 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path bigscience/bloomz-560m --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template default  --finetuning_type lora --lora_target all --output_dir Reading/BLOOMZ-560m/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_BLOOMZ-560m_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
-``` -->
-
-<!-- ```bash
-CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path TinyLlama-1.1B-step-50K-105b --do_train  --dataset_dir LLMs/data --dataset WebQSP_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-1.1b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 100.0 --plot_loss  --fp16 >> train_LLaMA2-1.1b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
-``` -->
-
-Test LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset WebQSP_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/checkpoint --output_dir Reading/LLaMA2-13b/WebQSP_Freebase_NQ_lora_epoch100/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
 
 Beam-setting LLMs for Logical Form Generation:
@@ -204,11 +143,6 @@ Train LLMs for Logical Form Generation:
 CUDA_VISIBLE_DEVICES=3 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset CWQ_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 10.0 --plot_loss  --fp16 >> train_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
 
-Test LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset CWQ_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/checkpoint --output_dir Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
 Beam-setting LLMs for Logical Form Generation:
 ```bash
 CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset CWQ_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/checkpoint --num_beams 8 >> predbeam_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
@@ -217,50 +151,7 @@ CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model
 python run_generator_final.py --data_file_name Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
 ```
 
-- GrailQA: 
-
-Train LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=1 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset GrailQA_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 10.0 --plot_loss  --fp16 >> train_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-Test LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset GrailQA_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --output_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-Beam-setting LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=5 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset GrailQA_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/checkpoint --num_beams 8 >> predbeam_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-```bash
-python run_generator_final.py --data_file_name Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
-```
-
-- GrailQA-dev: 
-
-Train LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=4 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_train  --dataset_dir LLMs/data --dataset GrailQA-dev_Freebase_NQ_train --template default  --finetuning_type lora --lora_target q_proj,v_proj --output_dir Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/checkpoint --overwrite_cache --per_device_train_batch_size 4 --gradient_accumulation_steps 4  --lr_scheduler_type cosine --logging_steps 10 --save_steps 1000 --learning_rate 5e-5  --num_train_epochs 10.0 --plot_loss  --fp16 >> train_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-Test LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft --model_name_or_path meta-llama/Llama-2-13b-hf --do_predict  --dataset_dir LLMs/data  --dataset GrailQA-dev_Freebase_NQ_test --template default  --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/checkpoint --output_dir Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/evaluation --per_device_eval_batch_size 32 --predict_with_generate >> pred_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-Beam-setting LLMs for Logical Form Generation:
-```bash
-CUDA_VISIBLE_DEVICES=4 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path meta-llama/Llama-2-13b-hf --dataset_dir LLMs/data --dataset GrailQA-dev_Freebase_NQ_test --template default --finetuning_type lora --checkpoint_dir Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/checkpoint --num_beams 8 >> predbeam_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-```bash
-python run_generator_final.py --data_file_name Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
-```
-
-
-
-
-(5) **Evaluate KBQA result with Retrieval**
+(2) **Evaluate KBQA result with Retrieval**
 
 - WebQSP: 
 
@@ -285,22 +176,3 @@ Evaluate KBQA result with golden-entities and relation-retrieval:
 ```bash
 CUDA_VISIBLE_DEVICES=5 nohup python -u eval_final_cwq.py --dataset CWQ --pred_file Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
-
-- GrailQA: 
-
-Evaluate KBQA result with entity-retrieval and relation-retrieval:
-```bash
-CUDA_VISIBLE_DEVICES=4 nohup python -u eval_final_grailqa.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-- GrailQA-dev: 
-
-Evaluate KBQA result with entity-retrieval and relation-retrieval:
-```bash
-CUDA_VISIBLE_DEVICES=2 nohup python -u eval_final_grailqa-dev.py --dataset GrailQA-dev --pred_file Reading/LLaMA2-13b/GrailQA-dev_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_LLaMA2-13b_GrailQA-dev_Freebase_NQ_lora_epoch10.txt 2>&1 &
-```
-
-<!-- Evaluate KBQA result with golden-entities and relation-retrieval:
-```bash
-CUDA_VISIBLE_DEVICES=4 nohup python -u eval_final_grailqa.py --dataset GrailQA --pred_file Reading/LLaMA2-13b/GrailQA_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_GrailQA_Freebase_NQ_lora_epoch10.txt 2>&1 &
-``` -->
