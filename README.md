@@ -88,9 +88,13 @@ ChatKBQA/
 
 (1) **Parse SPARQL queries to S-expressions** 
 
-- WebQSP: Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train].json`. 
+- WebQSP: 
 
-- CWQ: Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
+Run `python parse_sparql_webqsp.py` and the augmented dataset files are saved as `data/WebQSP/sexpr/WebQSP.test[train].json`. 
+
+- CWQ: 
+
+Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `data/CWQ/sexpr/CWQ.test[train].json`.
  
 
 (2) **Prepare data for training and evaluation**
@@ -110,14 +114,18 @@ Run `python data_process.py --action get_type_label_map --dataset CWQ --split tr
 
 (3) **Prepare data for LLM model**
 
-- WebQSP: Run `python process_NQ.py --dataset_type WebQSP`. The merged data file will be saved as `LLMs/data/WebQSP_Freebase_NQ_test[train]/examples.json`.
+- WebQSP: 
 
-- CWQ: Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train]/examples.json`.
+Run `python process_NQ.py --dataset_type WebQSP`. The merged data file will be saved as `LLMs/data/WebQSP_Freebase_NQ_test[train]/examples.json`.
+
+- CWQ: 
+
+Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train]/examples.json`.
 
 
 ## Fine-tuning, Retrieval and Evaluation
 
-The following is an example of LLaMa2-13b fine-tuning and retrieval, we also provide a variety of LLMs (including LLaMa2-7b, ChatGLM2-6b) fine-tuning instructions.
+The following is an example of LLaMa2-13b fine-tuning and retrieval, we also provide a variety of LLMs (including [LLaMa2-7b](scripts/README_LLaMa2-7b.md), [ChatGLM2-6b](scripts/README_ChatGLM2-6b.md)) fine-tuning instructions.
 
 (1) **Train and test LLM model for Logical Form Generation**
 
