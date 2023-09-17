@@ -125,7 +125,7 @@ Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved
 
 ## Fine-tuning, Retrieval and Evaluation
 
-The following is an example of LLaMa2-13b fine-tuning and retrieval, we also provide a variety of LLMs (including [LLaMa2-7b](scripts/README_LLaMa2-7b.md), [ChatGLM2-6b](scripts/README_ChatGLM2-6b.md)) fine-tuning instructions.
+The following is an example of [LLaMa2-13b](README.md) fine-tuning and retrieval, we also provide a variety of LLMs (including [LLaMa2-7b](scripts/README_LLaMa2-7b.md), [ChatGLM2-6b](scripts/README_ChatGLM2-6b.md)) fine-tuning instructions.
 
 (1) **Train and test LLM model for Logical Form Generation**
 
