@@ -1,14 +1,3 @@
-"""
-Modified on the basis of [RNG-KBQA](https://github.com/salesforce/rng-kbqa).
-The original license information is as follows:
- Copyright (c) 2021, salesforce.com, inc.
- All rights reserved.
- SPDX-License-Identifier: BSD-3-Clause
- For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
-"""
-
-
-import logging
 import random
 
 import torch
@@ -18,14 +7,6 @@ from transformers import (
     AutoTokenizer,
     AutoConfig,
 )
-
-
-# from entity_retrieval.bert_ranker import BertForCandidateRanking
-
-
-# MODEL_TYPE_DICT = {
-#     'bert': BertForCandidateRanking,
-# }
 
 ELQ_SERVICE_URL = "http://localhost:5688/entity_linking"
 FREEBASE_SPARQL_WRAPPER_URL = "http://localhost:8890/sparql"
