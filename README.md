@@ -54,7 +54,7 @@ ChatKBQA/
 
 ## Dataset
 
-Experiments are conducted on 3 semantic parsing benchmarks WebQSP, CWQ and GrailQA.
+Experiments are conducted on 2 KBQA benchmarks WebQSP, CWQ.
 
 ### WebQSP
 
