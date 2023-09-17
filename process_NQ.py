@@ -3,7 +3,6 @@ import json
 import argparse
 from components.utils import load_json
 from tqdm import tqdm
-import re
 
 def load_data(split, args):
     data_file_name = 'data/{}/generation/merged/{}_{}.json'.format(args.dataset_type,args.dataset_type,split)

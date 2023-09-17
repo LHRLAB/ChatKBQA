@@ -1,31 +1,10 @@
-"""
-Modified on the basis of [RNG-KBQA](https://github.com/salesforce/rng-kbqa).
-The original license information is as follows:
- Copyright (c) 2021, salesforce.com, inc.
- All rights reserved.
- SPDX-License-Identifier: BSD-3-Clause
- For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
-"""
-
-import collections
 import re
-import pickle
-import json
 import os
-import math
-import random
-from re import L
-import shutil
-from collections import Counter
-from typing import Pattern
 from tqdm import tqdm
-
-from numpy import sort
 from components.utils import *
-from components.expr_parser import parse_s_expr, extract_entities, tokenize_s_expr
-from executor.sparql_executor import get_label, execute_query, execute_query_with_odbc
+from components.expr_parser import parse_s_expr
+from executor.sparql_executor import execute_query, execute_query_with_odbc
 from executor.logic_form_util import lisp_to_sparql
-
 
 class ParseError(Exception):
     pass

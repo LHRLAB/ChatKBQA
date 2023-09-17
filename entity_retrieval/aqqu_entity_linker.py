@@ -1,10 +1,3 @@
-"""
-An approach to identify entities in a query. Uses a custom index for entity information.
-
-Copyright 2015, University of Freiburg.
-
-Elmar Haussmann <haussmann@cs.uni-freiburg.de>
-"""
 import logging
 import re
 import time

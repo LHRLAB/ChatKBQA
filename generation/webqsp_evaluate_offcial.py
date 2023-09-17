@@ -1,6 +1,3 @@
-"""
-Based on offcial evaluation script from https://www.microsoft.com/en-us/download/details.aspx?id=52763
-"""
 import json
 import os
 import argparse

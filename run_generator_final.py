@@ -3,10 +3,6 @@ import argparse
 import json
 from components.utils import dump_json
 
-
-"""
-Important: Edit this when change source data
-""" 
 def prepare_dataloader(args):
     print('Loading data from:',args.data_file_name)
     with open(args.data_file_name, 'r', encoding='utf-8') as f:

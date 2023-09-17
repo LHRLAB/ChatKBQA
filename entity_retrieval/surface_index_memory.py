@@ -1,20 +1,3 @@
-"""
-Provides access to entities via IDs (MIDs) and surface forms (aliases).
-
-Each entity is assigned an ID equivalent to the byte offset in the entity list
-file. A hashmap stores a mapping from MID to this offset. Additionally,
-another hashmap stores a mapping from surface form to this offset, along with
-a score.
-Matched entities with additional info (scores, other aliases) are then read
-from the list file using the found offset. This avoids keeping all entities
-with unneeded info in RAM.
-
-Note: this can be improved in terms of required RAM.
-
-Copyright 2015, University of Freiburg.
-
-Elmar Haussmann <haussmann@cs.uni-freiburg.de>
-"""
 import mmap
 import logging
 import os

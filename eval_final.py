@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-
-# here put the import lib
 import argparse
 from generation.cwq_evaluate import cwq_evaluate_valid_results
 from generation.webqsp_evaluate_offcial import webqsp_evaluate_valid_results

@@ -1,11 +1,3 @@
-"""
-Modified on the basis of [RNG-KBQA](https://github.com/salesforce/rng-kbqa).
-The original license information is as follows:
- Copyright (c) 2021, salesforce.com, inc.
- All rights reserved.
- SPDX-License-Identifier: BSD-3-Clause
- For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/BSD-3-Clause
-"""
 from collections import defaultdict
 from typing import List, Tuple
 from SPARQLWrapper import SPARQLWrapper, JSON

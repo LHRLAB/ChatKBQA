@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-"""
-@File    :   cwq_evaluate.py
-@Time    :   2022/01/10 16:14:58
-@Author  :   Xixin Hu 
-@Version :   1.0
-@Contact :   xixinhu97@foxmail.com
-@Desc    :   None
-"""
-
-# here put the import lib
 import argparse 
 from executor import sparql_executor
 from components.utils import dump_json, load_json

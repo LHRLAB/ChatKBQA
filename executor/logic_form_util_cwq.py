@@ -1,12 +1,3 @@
-"""
-Modified on the basis of [GrailQA](https://github.com/dki-lab/GrailQA).
-The original license information is as follows:
- Copyright 2021, Ohio State University (Yu Gu)
- Yu Gu  <gu.826@osu.edu>
- Apache 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-"""
-
-
 import networkx as nx
 from typing import List, Union
 from collections import defaultdict
