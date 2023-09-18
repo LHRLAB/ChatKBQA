@@ -31,7 +31,7 @@ CUDA_VISIBLE_DEVICES=0 nohup python -u LLMs/LLaMA/src/train_bash.py --stage sft 
 
 Beam-setting LLMs for Logical Form Generation:
 ```bash
-CUDA_VISIBLE_DEVICES=3 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path THUDM/chatglm2-6b --dataset_dir LLMs/data --dataset CWQ_Freebase_NQ_test --template chatglm2  --finetuning_type lora --checkpoint_dir Reading/ChatGLM2-6b/CWQ_Freebase_NQ_lora_epoch10/checkpoint --num_beams 8 >> predbeam_ChatGLM2-6b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=2 nohup python -u LLMs/LLaMA/src/beam_output_eva.py --model_name_or_path THUDM/chatglm2-6b --dataset_dir LLMs/data --dataset CWQ_Freebase_NQ_test --template chatglm2  --finetuning_type lora --checkpoint_dir Reading/ChatGLM2-6b/CWQ_Freebase_NQ_lora_epoch10/checkpoint --num_beams 8 >> predbeam_ChatGLM2-6b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
 ```bash
 python run_generator_final.py --data_file_name Reading/ChatGLM2-6b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/generated_predictions.jsonl
