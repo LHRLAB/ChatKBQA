@@ -4,10 +4,7 @@
 
 The following is an example of Baichuan2-13b fine-tuning and retrieval.
 
-Download [Baichuan2-13b](https://huggingface.co/baichuan-inc/Baichuan2-13B-Base) model to ```LLMs/models/Baichuan2-13B-Base```:
-```bash
-git clone git@hf.co:baichuan-inc/Baichuan2-13B-Base LLMs/models/Baichuan2-13B-Base
-```
+Download [Baichuan2-13b](https://huggingface.co/baichuan-inc/Baichuan2-13B-Base) model to ```LLMs/models/Baichuan2-13B-Base```.
 
 (1) **Train and test LLM model for Logical Form Generation**
 
