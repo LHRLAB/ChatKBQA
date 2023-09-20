@@ -281,7 +281,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in tqdm(denorm_sexprs[:8]):
+    for d in tqdm(denorm_sexprs[:20]):
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
@@ -307,7 +307,7 @@ def try_relation(d):
         in_rels, out_rels, _ = get_2hop_relations_with_odbc_wo_filter(ent)
         cand_rels = cand_rels | set(in_rels) | set(out_rels)
     cand_rels = list(cand_rels)
-    if len(cand_rels) == 0:
+    if len(cand_rels) == 0 or len(rel_list) == 0:
         return d.replace('( ','(').replace(' )', ')'), []
     similarities = model.similarity(rel_list, cand_rels)
     change = dict()
@@ -318,12 +318,12 @@ def try_relation(d):
         for s in sorted_list:
             if s[1] > 0.01:
                 change_rel.append(s[0])
-        change[rel] = change_rel[:3]
+        change[rel] = change_rel[:10]
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:100]
+    exprs = [" ".join(s) for s in combinations][:1000]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
