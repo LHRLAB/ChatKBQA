@@ -168,3 +168,4 @@ train_*.txt
 wandb/*
 pred*.txt
 pred*.json
+LLMs/models/*

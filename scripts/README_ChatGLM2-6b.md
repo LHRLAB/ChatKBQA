@@ -43,7 +43,7 @@ python run_generator_final.py --data_file_name Reading/ChatGLM2-6b/CWQ_Freebase_
 
 Evaluate KBQA result with entity-retrieval and relation-retrieval:
 ```bash
-CUDA_VISIBLE_DEVICES=1 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/ChatGLM2-6b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_ChatGLM2-6b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=2 nohup python -u eval_final.py --dataset WebQSP --pred_file Reading/ChatGLM2-6b/WebQSP_Freebase_NQ_lora_epoch100/evaluation_beam/beam_test_top_k_predictions.json >> predfinal_ChatGLM2-6b_WebQSP_Freebase_NQ_lora_epoch100.txt 2>&1 &
 ```
 
 Evaluate KBQA result with golden-entities and relation-retrieval:
