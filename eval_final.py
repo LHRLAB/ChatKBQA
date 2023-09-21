@@ -162,7 +162,7 @@ def denormalize_s_expr_new(normed_expr,
                                 similarities = model.similarity([cur_seg.lower()], list(entity_label_map.keys()))  
                                 merged_list = list(zip([v for _,v in entity_label_map.items()], similarities[0]))
                                 sorted_list = sorted(merged_list, key=lambda x: x[1], reverse=True)[0]
-                                if sorted_list[1] > 0.5:
+                                if sorted_list[1] > 0.2:
                                     cur_seg = sorted_list[0]
                                 else:       
                                     search = True                         
@@ -281,7 +281,7 @@ def execute_normed_s_expr_from_label_maps_rel(normed_expr,
     
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in denorm_sexprs]
 
-    for d in tqdm(denorm_sexprs[:20]):
+    for d in tqdm(denorm_sexprs[:100]):
         query_expr, denotation = try_relation(d)
         if len(denotation) != 0 :
             break          
@@ -318,12 +318,12 @@ def try_relation(d):
         for s in sorted_list:
             if s[1] > 0.01:
                 change_rel.append(s[0])
-        change[rel] = change_rel[:10]
+        change[rel] = change_rel[:25]
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
     combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
-    exprs = [" ".join(s) for s in combinations][:1000]
+    exprs = [" ".join(s) for s in combinations][:10000]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:
         try:
