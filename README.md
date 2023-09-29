@@ -1,4 +1,9 @@
 # ChatKBQA
+ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models
+
+## Overview
+![](./figs/F1.drawio.png)
+![](./figs/F2.drawio.png)
 
 ##  General Setup 
 
