@@ -169,3 +169,9 @@ wandb/*
 pred*.txt
 pred*.json
 LLMs/models/*
+*.ipynb
+log/*
+LLMs/LLaMA/src/run_qlora.sh
+LLMs/LLaMA/src/run_train.sh
+generate_scripts/*
+evaluate_scripts/*
