@@ -9,7 +9,7 @@ networkx
 pyodbc==4.0.31
 sparqlwrapper==1.8.5
 urllib3==1.25.11
-transformers
+transformers==4.31.0
 numpy
 faiss-gpu==1.7.2
 antlr4-python3-runtime==4.9.2
