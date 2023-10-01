@@ -332,7 +332,7 @@ def merge_all_data_for_logical_form_generation(dataset, split):
         gold_ent_label_map = {}
         gold_rel_label_map = {}
         gold_type_label_map = {}
-        normed_sexpr = example['question']
+        # normed_sexpr = example['question']
             
         normed_sexpr = vanilla_sexpr_linearization_method(sexpr)
         gold_entities = extract_mentioned_entities_from_sparql(sparql)
