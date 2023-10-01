@@ -13,16 +13,23 @@ from transformers import (
     PreTrainedModel,
     PreTrainedTokenizerBase
 )
+from transformers.models.llama import modeling_llama as LlamaModule
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
-from transformers.deepspeed import is_deepspeed_zero3_enabled
 from trl import AutoModelForCausalLMWithValueHead
 
+try:
+    from transformers.integrations import is_deepspeed_zero3_enabled
+except ImportError: # https://github.com/huggingface/transformers/releases/tag/v4.33.1
+    from transformers.deepspeed import is_deepspeed_zero3_enabled
+
 from llmtuner.extras.logging import reset_logging, get_logger
-from llmtuner.extras.misc import count_parameters, prepare_model_for_training
+from llmtuner.extras.misc import count_parameters
+from llmtuner.extras.patches import llama_patch as LlamaPatches
 from llmtuner.extras.save_and_load import load_valuehead_params
 from llmtuner.hparams import FinetuningArguments
 from llmtuner.tuner.core.adapter import init_adapter
+from llmtuner.tuner.core.utils import prepare_model_for_training
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -32,11 +39,11 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-check_min_version("4.29.1")
+check_min_version("4.30.0")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft>=0.4.0", "To fix: pip install peft>=0.4.0")
-require_version("trl>=0.5.0", "To fix: pip install trl>=0.5.0")
+require_version("trl>=0.7.1", "To fix: pip install trl>=0.7.1")
 
 
 def load_model_and_tokenizer(
@@ -64,22 +71,26 @@ def load_model_and_tokenizer(
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
-        padding_side=model_args.padding_side,
+        padding_side="right", # training with left-padded tensors in fp16 precision may cause overflow
         **config_kwargs
     )
 
-    if finetuning_args.finetuning_type == "full" and model_args.checkpoint_dir is not None:
+    if finetuning_args.finetuning_type != "lora" and model_args.checkpoint_dir is not None:
         model_to_load = model_args.checkpoint_dir[0]
     else:
         model_to_load = model_args.model_name_or_path
 
     config = AutoConfig.from_pretrained(model_to_load, **config_kwargs)
 
-    if hasattr(config, "fp16") and hasattr(config, "bf16"): # fix Qwen config
-        if model_args.compute_dtype == torch.bfloat16:
-            setattr(config, "bf16", True)
-        else:
-            setattr(config, "fp16", True)
+    # Fix tokenizer (for ChatGLM2)
+    if getattr(config, "model_type", None) == "chatglm":
+        tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+
+    # Fix config (for Qwen)
+    if getattr(config, "model_type", None) == "qwen":
+        setattr(config, "fp16", model_args.compute_dtype == torch.float16)
+        setattr(config, "bf16", model_args.compute_dtype == torch.bfloat16)
+        setattr(config, "fp32", model_args.compute_dtype == torch.float32)
 
     # Set RoPE scaling
     if model_args.rope_scaling is not None:
@@ -91,9 +102,8 @@ def load_model_and_tokenizer(
                 setattr(config, "use_logn_attn", True)
                 logger.info("Using dynamic NTK scaling.")
 
-        elif hasattr(config, "rope_scaling"): # for LLaMA models
+        elif hasattr(config, "rope_scaling"): # for LLaMA and Falcon models
             require_version("transformers>=4.31.0", "RoPE scaling requires transformers>=4.31.0")
-
             if is_trainable:
                 if model_args.rope_scaling == "dynamic":
                     logger.warning(
@@ -117,6 +127,20 @@ def load_model_and_tokenizer(
 
         else:
             logger.warning("Current model does not support RoPE scaling.")
+
+    # Set FlashAttention-2
+    if model_args.flash_attn:
+        if getattr(config, "model_type", None) == "llama":
+            LlamaModule.LlamaAttention = LlamaPatches.LlamaFlashAttention2
+            LlamaModule.LlamaModel._prepare_decoder_attention_mask = (
+                LlamaPatches._prepare_decoder_attention_mask
+            )
+            logger.info("Using FlashAttention-2 for faster training and inference.")
+        else:
+            logger.warning("Current model does not support FlashAttention-2.")
+    elif is_trainable and model_args.shift_attn and getattr(config, "model_type", None) == "llama":
+        LlamaModule.LlamaAttention = LlamaPatches.LlamaShiftShortAttention
+        logger.warning("Using `--flash_attn` for faster training in large context length.")
 
     # Quantization configurations (using bitsandbytes library).
     is_mergeable = True
@@ -152,12 +176,20 @@ def load_model_and_tokenizer(
         **config_kwargs
     )
 
-    # Disable custom generate method (for Qwen)
-    if "GenerationMixin" not in str(model.generate.__func__):
+    # Set shift short attention (S^2-Attn)
+    if is_trainable and model_args.shift_attn:
+        if getattr(config, "model_type", None) == "llama":
+            setattr(model, "shift_ratio", 0.25)
+            logger.info("Using shift short attention proposed by LongLoRA.")
+        else:
+            logger.warning("Current model does not support shift short attention.")
+
+    # Disable custom generate method (for Qwen and Baichuan2)
+    if isinstance(model, PreTrainedModel) and "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
     # Fix LM head (for ChatGLM2)
-    if not hasattr(model, "lm_head") and hasattr(model, "transformer"):
+    if getattr(config, "model_type", None) == "chatglm":
         setattr(model, "lm_head", model.transformer.output_layer)
 
     # Register auto class to save the custom code files.
@@ -169,15 +201,18 @@ def load_model_and_tokenizer(
         tokenizer.__class__.register_for_auto_class()
 
     # Initialize adapters
-    model = prepare_model_for_training(model, finetuning_args.finetuning_type) if is_trainable else model
+    if is_trainable:
+        model = prepare_model_for_training(model, model_args.layernorm_dtype, finetuning_args.finetuning_type)
     model = init_adapter(model, model_args, finetuning_args, is_trainable, is_mergeable)
+    model = model.train() if is_trainable else model.eval()
 
     # Prepare model with valuehead for RLHF
     if stage == "rm" or stage == "ppo":
-        model: AutoModelForCausalLMWithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(model)
+        model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
+        model._keys_to_ignore_on_save = None
         reset_logging()
         if stage == "rm" and model_args.checkpoint_dir is not None: # load valuehead weights to evaluate reward model
-            logger.warning("Only the last checkpoint containing valuehead will be loaded as the valuehead.")
+            logger.warning("Only the last checkpoint containing valuehead will be loaded.")
             if load_valuehead_params(model, model_args.checkpoint_dir[-1]):
                 model.v_head.load_state_dict({
                     "summary.weight": getattr(model, "reward_head_weight"),
@@ -186,14 +221,14 @@ def load_model_and_tokenizer(
 
         if stage == "ppo": # load reward model
             logger.info("Load reward model from {}".format(model_args.reward_model))
-            model.pretrained_model.load_adapter(model_args.reward_model, "reward", is_trainable=False)
+            if getattr(model, "is_peft_model", False):
+                model.pretrained_model.load_adapter(model_args.reward_model, "reward")
             assert load_valuehead_params(model, model_args.reward_model), "Reward model is not correctly loaded."
 
     # Prepare model for inference
     if not is_trainable:
         model.requires_grad_(False) # fix all model params
-        infer_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16 # detect cuda capability
-        model = model.to(infer_dtype) if model_args.quantization_bit is None else model
+        model = model.to(model_args.compute_dtype) if model_args.quantization_bit is None else model
 
     trainable_params, all_param = count_parameters(model)
     logger.info("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(

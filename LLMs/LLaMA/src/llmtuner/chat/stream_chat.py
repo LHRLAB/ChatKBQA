@@ -1,7 +1,7 @@
 import torch
 from typing import Any, Dict, Generator, List, Optional, Tuple
 from threading import Thread
-from transformers import TextIteratorStreamer
+from transformers import GenerationConfig, TextIteratorStreamer
 
 from llmtuner.extras.misc import dispatch_model, get_logits_processor
 from llmtuner.extras.template import get_template_and_fix_tokenizer
@@ -13,8 +13,8 @@ class ChatModel:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         model_args, data_args, finetuning_args, self.generating_args = get_infer_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
+        self.tokenizer.padding_side = "left"
         self.model = dispatch_model(self.model)
-        self.model = self.model.eval() # enable evaluation mode
         self.template = get_template_and_fix_tokenizer(data_args.template, self.tokenizer)
         self.system_prompt = data_args.system_prompt
 
@@ -41,57 +41,33 @@ class ChatModel:
         max_length = input_kwargs.pop("max_length", None)
         max_new_tokens = input_kwargs.pop("max_new_tokens", None)
 
-        gen_kwargs = self.generating_args.to_dict()
-        gen_kwargs.update(dict(
-            input_ids=input_ids,
-            do_sample=do_sample if do_sample is not None else gen_kwargs["do_sample"],
-            temperature=temperature or gen_kwargs["temperature"],
-            top_p=top_p or gen_kwargs["top_p"],
-            top_k=top_k or gen_kwargs["top_k"],
-            repetition_penalty=repetition_penalty or gen_kwargs["repetition_penalty"],
-            eos_token_id=list(set([self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids)),
-            pad_token_id=self.tokenizer.pad_token_id,
-            logits_processor=get_logits_processor()
+        generating_args = self.generating_args.to_dict()
+        generating_args.update(dict(
+            do_sample=do_sample if do_sample is not None else generating_args["do_sample"],
+            temperature=temperature or generating_args["temperature"],
+            top_p=top_p or generating_args["top_p"],
+            top_k=top_k or generating_args["top_k"],
+            repetition_penalty=repetition_penalty or generating_args["repetition_penalty"],
+            eos_token_id=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
+            pad_token_id=self.tokenizer.pad_token_id
         ))
 
         if max_length:
-            gen_kwargs.pop("max_new_tokens", None)
-            gen_kwargs["max_length"] = max_length
+            generating_args.pop("max_new_tokens", None)
+            generating_args["max_length"] = max_length
 
         if max_new_tokens:
-            gen_kwargs.pop("max_length", None)
-            gen_kwargs["max_new_tokens"] = max_new_tokens
+            generating_args.pop("max_length", None)
+            generating_args["max_new_tokens"] = max_new_tokens
+
+        gen_kwargs = dict(
+            inputs=input_ids,
+            generation_config=GenerationConfig(**generating_args),
+            logits_processor=get_logits_processor()
+        )
 
         return gen_kwargs, prompt_length
 
-    @torch.inference_mode()
-    def chat_beam(
-        self,
-        query: str,
-        history: Optional[List[Tuple[str, str]]] = None,
-        system: Optional[str] = None,
-        **input_kwargs
-    ) -> Tuple[str, Tuple[int, int]]:
-        gen_kwargs, prompt_length = self.process_args(query, history, system, **input_kwargs)
-        gen_kwargs['num_return_sequences']=gen_kwargs['num_beams']
-        gen_kwargs['num_beam_groups']=gen_kwargs['num_beams']
-        gen_kwargs['do_sample']=False
-        gen_kwargs['diversity_penalty']=1.0
-        generation_output = self.model.generate(**gen_kwargs,return_dict_in_generate=True, output_scores=True)
-        outputs = [g[prompt_length:] for g in generation_output['sequences'].tolist()]
-        outputs_scores = [s for s in generation_output['sequences_scores'].tolist()]
-        response = [self.tokenizer.decode(o, skip_special_tokens=True) for o in outputs]
-        
-        response_dict = {}
-        for resp, score in zip(response, outputs_scores):
-            if resp not in response_dict or score > response_dict[resp]:
-                response_dict[resp] = score
-
-        # 将字典转换为元组列表并按得分排序
-        sorted_responses = sorted(response_dict.items(), key=lambda x: x[1], reverse=True)
-        # response_length = len(outputs)
-        return sorted_responses
-    
     @torch.inference_mode()
     def chat(
         self,
