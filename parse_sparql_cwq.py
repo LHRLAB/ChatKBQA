@@ -681,6 +681,6 @@ def parse_cwq_sparql(check_execute_accuracy=False):
 if __name__ == '__main__':
     
     parser = Parser()
-    parse_cwq_sparql(check_execute_accuracy=True)
+    parse_cwq_sparql(check_execute_accuracy=False)
 
     
