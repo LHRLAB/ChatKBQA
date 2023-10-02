@@ -43,7 +43,10 @@ class ChatModel:
 
         generating_args = self.generating_args.to_dict()
         generating_args.update(dict(
-            do_sample=do_sample if do_sample is not None else generating_args["do_sample"],
+            do_sample=False,
+            num_beams = generating_args["num_beams"],
+            num_beam_groups = generating_args["num_beams"],
+            diversity_penalty = 1.0,
             temperature=temperature or generating_args["temperature"],
             top_p=top_p or generating_args["top_p"],
             top_k=top_k or generating_args["top_k"],
@@ -68,6 +71,30 @@ class ChatModel:
 
         return gen_kwargs, prompt_length
 
+    @torch.inference_mode()
+    def chat_beam(
+        self,
+        query: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        system: Optional[str] = None,
+        **input_kwargs
+    ) -> Tuple[str, Tuple[int, int]]:
+        gen_kwargs, prompt_length = self.process_args(query, history, system, **input_kwargs)
+        generation_output = self.model.generate(**gen_kwargs,return_dict_in_generate=True, output_scores=True)
+        outputs = [g[prompt_length:] for g in generation_output['sequences'].tolist()]
+        outputs_scores = [s for s in generation_output['sequences_scores'].tolist()]
+        response = [self.tokenizer.decode(o, skip_special_tokens=True) for o in outputs]
+        
+        response_dict = {}
+        for resp, score in zip(response, outputs_scores):
+            if resp not in response_dict or score > response_dict[resp]:
+                response_dict[resp] = score
+
+        # 将字典转换为元组列表并按得分排序
+        sorted_responses = sorted(response_dict.items(), key=lambda x: x[1], reverse=True)
+        # response_length = len(outputs)
+        return sorted_responses
+    
     @torch.inference_mode()
     def chat(
         self,
