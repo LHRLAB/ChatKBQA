@@ -47,6 +47,7 @@ class ChatModel:
             num_beams = generating_args["num_beams"],
             num_beam_groups = generating_args["num_beams"],
             diversity_penalty = 1.0,
+            num_return_sequences=generating_args["num_beams"],
             temperature=temperature or generating_args["temperature"],
             top_p=top_p or generating_args["top_p"],
             top_k=top_k or generating_args["top_k"],
