@@ -1,7 +1,7 @@
 import torch
 from typing import Any, Dict, Generator, List, Optional, Tuple
 from threading import Thread
-from transformers import GenerationConfig, TextIteratorStreamer
+from transformers import TextIteratorStreamer
 
 from llmtuner.extras.misc import dispatch_model, get_logits_processor
 from llmtuner.extras.template import get_template_and_fix_tokenizer
@@ -13,8 +13,8 @@ class ChatModel:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         model_args, data_args, finetuning_args, self.generating_args = get_infer_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
-        self.tokenizer.padding_side = "left"
         self.model = dispatch_model(self.model)
+        self.model = self.model.eval() # enable evaluation mode
         self.template = get_template_and_fix_tokenizer(data_args.template, self.tokenizer)
         self.system_prompt = data_args.system_prompt
 
@@ -41,34 +41,26 @@ class ChatModel:
         max_length = input_kwargs.pop("max_length", None)
         max_new_tokens = input_kwargs.pop("max_new_tokens", None)
 
-        generating_args = self.generating_args.to_dict()
-        generating_args.update(dict(
-            do_sample=False,
-            num_beams = generating_args["num_beams"],
-            num_beam_groups = generating_args["num_beams"],
-            diversity_penalty = 1.0,
-            num_return_sequences=generating_args["num_beams"],
-            temperature=temperature or generating_args["temperature"],
-            top_p=top_p or generating_args["top_p"],
-            top_k=top_k or generating_args["top_k"],
-            repetition_penalty=repetition_penalty or generating_args["repetition_penalty"],
-            eos_token_id=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
-            pad_token_id=self.tokenizer.pad_token_id
+        gen_kwargs = self.generating_args.to_dict()
+        gen_kwargs.update(dict(
+            input_ids=input_ids,
+            do_sample=do_sample if do_sample is not None else gen_kwargs["do_sample"],
+            temperature=temperature or gen_kwargs["temperature"],
+            top_p=top_p or gen_kwargs["top_p"],
+            top_k=top_k or gen_kwargs["top_k"],
+            repetition_penalty=repetition_penalty or gen_kwargs["repetition_penalty"],
+            eos_token_id=list(set([self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids)),
+            pad_token_id=self.tokenizer.pad_token_id,
+            logits_processor=get_logits_processor()
         ))
 
         if max_length:
-            generating_args.pop("max_new_tokens", None)
-            generating_args["max_length"] = max_length
+            gen_kwargs.pop("max_new_tokens", None)
+            gen_kwargs["max_length"] = max_length
 
         if max_new_tokens:
-            generating_args.pop("max_length", None)
-            generating_args["max_new_tokens"] = max_new_tokens
-
-        gen_kwargs = dict(
-            inputs=input_ids,
-            generation_config=GenerationConfig(**generating_args),
-            logits_processor=get_logits_processor()
-        )
+            gen_kwargs.pop("max_length", None)
+            gen_kwargs["max_new_tokens"] = max_new_tokens
 
         return gen_kwargs, prompt_length
 
@@ -81,6 +73,10 @@ class ChatModel:
         **input_kwargs
     ) -> Tuple[str, Tuple[int, int]]:
         gen_kwargs, prompt_length = self.process_args(query, history, system, **input_kwargs)
+        gen_kwargs['num_return_sequences']=gen_kwargs['num_beams']
+        gen_kwargs['num_beam_groups']=gen_kwargs['num_beams']
+        gen_kwargs['do_sample']=False
+        gen_kwargs['diversity_penalty']=1.0
         generation_output = self.model.generate(**gen_kwargs,return_dict_in_generate=True, output_scores=True)
         outputs = [g[prompt_length:] for g in generation_output['sequences'].tolist()]
         outputs_scores = [s for s in generation_output['sequences_scores'].tolist()]

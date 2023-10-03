@@ -1,16 +1,16 @@
 # Inspired by:
+# https://github.com/lvwerra/trl/blob/main/examples/summarization/scripts/reward_summarization.py
 # https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 
 from typing import TYPE_CHECKING, Optional, List
 from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
-from llmtuner.extras.callbacks import SavePeftModelCallback
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.rm.metric import compute_accuracy
 from llmtuner.tuner.rm.collator import PairwiseDataCollatorWithPadding
-from llmtuner.tuner.rm.trainer import PairwiseTrainer
+from llmtuner.tuner.rm.trainer import PairwisePeftTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
@@ -34,12 +34,13 @@ def run_rm(
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
-    trainer = PairwiseTrainer(
+    trainer = PairwisePeftTrainer(
+        finetuning_args=finetuning_args,
         model=model,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        callbacks=callbacks + [SavePeftModelCallback()],
+        callbacks=callbacks,
         compute_metrics=compute_accuracy,
         **split_dataset(dataset, data_args, training_args)
     )

@@ -9,7 +9,7 @@ from llmtuner.extras.misc import get_logits_processor
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.sft.metric import ComputeMetrics
-from llmtuner.tuner.sft.trainer import CustomSeq2SeqTrainer
+from llmtuner.tuner.sft.trainer import Seq2SeqPeftTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
@@ -27,10 +27,6 @@ def run_sft(
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="sft")
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="sft")
-
-    if training_args.predict_with_generate:
-        tokenizer.padding_side = "left" # use left-padding in generation
-
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
@@ -39,13 +35,14 @@ def run_sft(
     # Override the decoding parameters of Seq2SeqTrainer
     training_args_dict = training_args.to_dict()
     training_args_dict.update(dict(
-        generation_max_length=training_args.generation_max_length or data_args.cutoff_len,
+        generation_max_length=training_args.generation_max_length or data_args.max_target_length,
         generation_num_beams=data_args.eval_num_beams or training_args.generation_num_beams
     ))
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
-    trainer = CustomSeq2SeqTrainer(
+    trainer = Seq2SeqPeftTrainer(
+        finetuning_args=finetuning_args,
         model=model,
         args=training_args,
         tokenizer=tokenizer,
@@ -57,7 +54,7 @@ def run_sft(
 
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict()
-    gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
+    gen_kwargs["eos_token_id"] = list(set([tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids))
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
     gen_kwargs["logits_processor"] = get_logits_processor()
 

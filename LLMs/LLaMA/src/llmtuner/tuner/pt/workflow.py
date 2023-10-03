@@ -2,11 +2,12 @@
 
 import math
 from typing import TYPE_CHECKING, Optional, List
-from transformers import DataCollatorForLanguageModeling, Trainer
+from transformers import DataCollatorForLanguageModeling
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
+from llmtuner.tuner.core.trainer import PeftTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
@@ -26,7 +27,8 @@ def run_pt(
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
-    trainer = Trainer(
+    trainer = PeftTrainer(
+        finetuning_args=finetuning_args,
         model=model,
         args=training_args,
         tokenizer=tokenizer,

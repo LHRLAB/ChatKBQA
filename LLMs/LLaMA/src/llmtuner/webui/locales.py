@@ -147,14 +147,24 @@ LOCALES = {
             "value": "关闭"
         }
     },
-    "cutoff_len": {
+    "max_source_length": {
         "en": {
-            "label": "Cutoff length",
-            "info": "Max tokens in input sequence."
+            "label": "Max source length",
+            "info": "Max tokens in source sequence."
         },
         "zh": {
-            "label": "截断长度",
+            "label": "输入序列最大长度",
             "info": "输入序列分词后的最大长度。"
+        }
+    },
+    "max_target_length": {
+        "en": {
+            "label": "Max target length",
+            "info": "Max tokens in target sequence."
+        },
+        "zh": {
+            "label": "输出序列最大长度",
+            "info": "输出序列分词后的最大长度。"
         }
     },
     "learning_rate": {
@@ -185,16 +195,6 @@ LOCALES = {
         "zh": {
             "label": "最大样本数",
             "info": "每个数据集最多使用的样本数。"
-        }
-    },
-    "compute_type": {
-        "en": {
-            "label": "Compute type",
-            "info": "Whether to use fp16 or bf16 mixed precision training."
-        },
-        "zh": {
-            "label": "计算类型",
-            "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
     "batch_size": {
@@ -277,20 +277,24 @@ LOCALES = {
             "info": "学习率预热采用的步数。"
         }
     },
-    "flash_attn": {
+    "compute_type": {
         "en": {
-            "label": "Use FlashAttention-2"
+            "label": "Compute type",
+            "info": "Whether to use fp16 or bf16 mixed precision training."
         },
         "zh": {
-            "label": "使用 FlashAttention-2"
+            "label": "计算类型",
+            "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
-    "rope_scaling": {
+    "padding_side": {
         "en": {
-            "label": "Use RoPE scaling"
+            "label": "Padding side",
+            "info": "The side on which the model should have padding applied."
         },
         "zh": {
-            "label": "使用 RoPE 插值"
+            "label": "填充位置",
+            "info": "使用左填充或右填充。"
         }
     },
     "lora_tab": {

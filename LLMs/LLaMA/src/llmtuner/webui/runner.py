@@ -8,11 +8,11 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from typing import Any, Dict, Generator, List, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.constants import DEFAULT_MODULE, TRAINING_STAGES
+from llmtuner.extras.constants import DEFAULT_MODULE
 from llmtuner.extras.logging import LoggerHandler
 from llmtuner.extras.misc import torch_gc
 from llmtuner.tuner import run_exp
-from llmtuner.webui.common import get_model_path, get_save_dir, load_config
+from llmtuner.webui.common import get_model_path, get_save_dir
 from llmtuner.webui.locales import ALERTS
 from llmtuner.webui.utils import gen_cmd, get_eval_results, update_process_bar
 
@@ -73,11 +73,11 @@ class Runner:
         training_stage: str,
         dataset_dir: str,
         dataset: List[str],
-        cutoff_len: int,
+        max_source_length: int,
+        max_target_length: int,
         learning_rate: str,
         num_train_epochs: str,
         max_samples: str,
-        compute_type: str,
         batch_size: int,
         gradient_accumulation_steps: int,
         lr_scheduler_type: str,
@@ -86,8 +86,8 @@ class Runner:
         logging_steps: int,
         save_steps: int,
         warmup_steps: int,
-        flash_attn: bool,
-        rope_scaling: bool,
+        compute_type: str,
+        padding_side: str,
         lora_rank: int,
         lora_dropout: float,
         lora_target: str,
@@ -98,30 +98,27 @@ class Runner:
     ) -> Tuple[str, str, List[str], str, Dict[str, Any]]:
         if checkpoints:
             checkpoint_dir = ",".join(
-                [get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]
+                [os.path.join(get_save_dir(model_name), finetuning_type, ckpt) for ckpt in checkpoints]
             )
         else:
             checkpoint_dir = None
 
-        output_dir = get_save_dir(model_name, finetuning_type, output_dir)
-
-        user_config = load_config()
-        cache_dir = user_config.get("cache_dir", None)
+        output_dir = os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
 
         args = dict(
-            stage=TRAINING_STAGES[training_stage],
+            stage="sft",
             model_name_or_path=get_model_path(model_name),
             do_train=True,
-            overwrite_cache=False,
-            cache_dir=cache_dir,
+            overwrite_cache=True,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
+            quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
             template=template,
             system_prompt=system_prompt,
             dataset_dir=dataset_dir,
             dataset=",".join(dataset),
-            cutoff_len=cutoff_len,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
             learning_rate=float(learning_rate),
             num_train_epochs=float(num_train_epochs),
             max_samples=int(max_samples),
@@ -132,24 +129,30 @@ class Runner:
             logging_steps=logging_steps,
             save_steps=save_steps,
             warmup_steps=warmup_steps,
-            flash_attn=flash_attn,
-            rope_scaling="linear" if rope_scaling else None,
+            padding_side=padding_side,
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
             lora_target=lora_target or DEFAULT_MODULE.get(model_name.split("-")[0], "q_proj,v_proj"),
-            resume_lora_training=(
-                False if TRAINING_STAGES[training_stage] in ["rm", "ppo", "dpo"] else resume_lora_training
-            ),
+            resume_lora_training=resume_lora_training,
             output_dir=output_dir
         )
         args[compute_type] = True
 
-        if args["stage"] == "ppo":
+        if training_stage == "Reward Modeling":
+            args["stage"] = "rm"
+            args["resume_lora_training"] = False
+        elif training_stage == "PPO":
+            args["stage"] = "ppo"
+            args["resume_lora_training"] = False
             args["reward_model"] = reward_model
+            args["padding_side"] = "left"
             val_size = 0
-
-        if args["stage"] == "dpo":
+        elif training_stage == "DPO":
+            args["stage"] = "dpo"
+            args["resume_lora_training"] = False
             args["dpo_beta"] = dpo_beta
+        elif training_stage == "Pre-Training":
+            args["stage"] = "pt"
 
         if val_size > 1e-6:
             args["val_size"] = val_size
@@ -170,46 +173,38 @@ class Runner:
         system_prompt: str,
         dataset_dir: str,
         dataset: List[str],
-        cutoff_len: int,
+        max_source_length: int,
+        max_target_length: int,
         max_samples: str,
         batch_size: int,
-        predict: bool,
-        max_new_tokens: int,
-        top_p: float,
-        temperature: float
+        predict: bool
     ) -> Tuple[str, str, List[str], str, Dict[str, Any]]:
         if checkpoints:
             checkpoint_dir = ",".join(
-                [get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]
+                [os.path.join(get_save_dir(model_name), finetuning_type, checkpoint) for checkpoint in checkpoints]
             )
-            output_dir = get_save_dir(model_name, finetuning_type, "eval_" + "_".join(checkpoints))
+            output_dir = os.path.join(get_save_dir(model_name), finetuning_type, "eval_" + "_".join(checkpoints))
         else:
             checkpoint_dir = None
-            output_dir = get_save_dir(model_name, finetuning_type, "eval_base")
-
-        user_config = load_config()
-        cache_dir = user_config.get("cache_dir", None)
+            output_dir = os.path.join(get_save_dir(model_name), finetuning_type, "eval_base")
 
         args = dict(
             stage="sft",
             model_name_or_path=get_model_path(model_name),
             do_eval=True,
-            overwrite_cache=False,
+            overwrite_cache=True,
             predict_with_generate=True,
-            cache_dir=cache_dir,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
+            quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
             template=template,
             system_prompt=system_prompt,
             dataset_dir=dataset_dir,
             dataset=",".join(dataset),
-            cutoff_len=cutoff_len,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
             max_samples=int(max_samples),
             per_device_eval_batch_size=batch_size,
-            max_new_tokens=max_new_tokens,
-            top_p=top_p,
-            temperature=temperature,
             output_dir=output_dir
         )
 

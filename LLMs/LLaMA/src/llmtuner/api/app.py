@@ -68,11 +68,7 @@ def create_app(chat_model: ChatModel) -> FastAPI:
             return EventSourceResponse(generate, media_type="text/event-stream")
 
         response, (prompt_length, response_length) = chat_model.chat(
-            query, history, system,
-            do_sample=request.do_sample,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            max_new_tokens=request.max_tokens
+            query, history, system, temperature=request.temperature, top_p=request.top_p, max_new_tokens=request.max_tokens
         )
 
         usage = ChatCompletionResponseUsage(
@@ -99,11 +95,7 @@ def create_app(chat_model: ChatModel) -> FastAPI:
         yield chunk.json(exclude_unset=True, ensure_ascii=False)
 
         for new_text in chat_model.stream_chat(
-            query, history, system,
-            do_sample=request.do_sample,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            max_new_tokens=request.max_tokens
+            query, history, system, temperature=request.temperature, top_p=request.top_p, max_new_tokens=request.max_tokens
         ):
             if len(new_text) == 0:
                 continue

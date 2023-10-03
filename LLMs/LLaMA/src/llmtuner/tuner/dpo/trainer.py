@@ -1,49 +1,40 @@
 import torch
 from collections import defaultdict
+from peft import PeftModel
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 from transformers import BatchEncoding, Trainer
 from trl import DPOTrainer
-from trl.trainer.utils import disable_dropout_in_model
 
 from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.tuner.core.trainer import PeftModelMixin
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel
+    from llmtuner.hparams import FinetuningArguments
 
 
-class CustomDPOTrainer(DPOTrainer):
+class DPOPeftTrainer(PeftModelMixin, DPOTrainer):
 
     def __init__(
         self,
-        beta: float,
-        model: Union["PreTrainedModel", torch.nn.Module],
+        finetuning_args: "FinetuningArguments",
         ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]] = None,
-        disable_dropout: Optional[bool] = True,
         **kwargs
     ):
-        if disable_dropout:
-            disable_dropout_in_model(model)
-            if ref_model is not None:
-                disable_dropout_in_model(ref_model)
-
-        self.is_encoder_decoder = model.config.is_encoder_decoder
+        self.finetuning_args = finetuning_args
         self.ref_model = ref_model
         self.use_dpo_data_collator = True # hack to avoid warning
         self.label_pad_token_id = IGNORE_INDEX
         self.padding_value = 0
-        self.beta = beta
+        self.beta = finetuning_args.dpo_beta
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
-        Trainer.__init__(self, model=model, **kwargs)
+        Trainer.__init__(self, **kwargs)
         if not hasattr(self, "accelerator"):
             raise AttributeError("Please update `transformers`.")
 
         if ref_model is not None:
-            if self.is_deepspeed_enabled:
-                self.ref_model, = self.accelerator._prepare_deepspeed(self.ref_model)
-                self.ref_model.eval()
-            else:
-                self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
+            self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def concatenated_forward(
         self,
@@ -51,12 +42,27 @@ class CustomDPOTrainer(DPOTrainer):
         batch: Optional[Dict[str, torch.Tensor]] = None
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
         batch_copied = BatchEncoding({k: v.detach().clone() for k, v in batch.items()}) # avoid error
+        unwrapped_model: "PreTrainedModel" = self.accelerator.unwrap_model(self.model)
 
-        all_logits = model(
-            input_ids=batch_copied["input_ids"],
-            attention_mask=batch_copied["attention_mask"],
-            return_dict=True
-        ).logits.to(torch.float32)
+        if not torch.is_grad_enabled():
+            unwrapped_model.gradient_checkpointing_disable()
+
+        if model is None and isinstance(unwrapped_model, PeftModel): # peft model has no ref_model
+            with unwrapped_model.disable_adapter():
+                all_logits = self.model(
+                    input_ids=batch_copied["input_ids"],
+                    attention_mask=batch_copied["attention_mask"],
+                    return_dict=True
+                ).logits.to(torch.float32)
+        else:
+            all_logits = model(
+                input_ids=batch_copied["input_ids"],
+                attention_mask=batch_copied["attention_mask"],
+                return_dict=True
+            ).logits.to(torch.float32)
+
+        if not torch.is_grad_enabled():
+            unwrapped_model.gradient_checkpointing_enable()
 
         all_logps = self._get_batch_logps(
             all_logits,
