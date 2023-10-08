@@ -11,7 +11,7 @@ from peft import (
 from peft.utils import CONFIG_NAME, WEIGHTS_NAME
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.save_and_load import load_trainable_params
+from llmtuner.tuner.core.utils import find_all_linear_modules
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
@@ -45,15 +45,18 @@ def init_adapter(
 
     if finetuning_args.finetuning_type == "freeze":
         logger.info("Fine-tuning method: Freeze")
+        num_layers = getattr(model.config, "num_layers")
+        if finetuning_args.num_layer_trainable > 0: # fine-tuning the last n layers if num_layer_trainable > 0
+            trainable_layer_ids = [num_layers - k - 1 for k in range(finetuning_args.num_layer_trainable)]
+        else: # fine-tuning the first n layers if num_layer_trainable < 0
+            trainable_layer_ids = [k for k in range(-finetuning_args.num_layer_trainable)]
 
+        trainable_layers = ["{:d}.{}".format(idx, finetuning_args.name_module_trainable) for idx in trainable_layer_ids]
         for name, param in model.named_parameters():
-            if not any(trainable_layer in name for trainable_layer in finetuning_args.trainable_layers):
+            if not any(trainable_layer in name for trainable_layer in trainable_layers):
                 param.requires_grad_(False)
             else:
                 param.data = param.data.to(torch.float32)
-
-        if model_args.checkpoint_dir is not None:
-            assert load_trainable_params(model, model_args.checkpoint_dir[0]), "Model checkpoint is not correctly loaded."
 
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: LoRA")
@@ -81,15 +84,23 @@ def init_adapter(
                 model = PeftModel.from_pretrained(model, latest_checkpoint, is_trainable=is_trainable)
 
         if is_trainable and latest_checkpoint is None: # create new lora weights while training
+            if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
+                target_modules = find_all_linear_modules(model, model_args.quantization_bit)
+            else:
+                target_modules = finetuning_args.lora_target
+
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
                 inference_mode=False,
                 r=finetuning_args.lora_rank,
                 lora_alpha=finetuning_args.lora_alpha,
                 lora_dropout=finetuning_args.lora_dropout,
-                target_modules=finetuning_args.lora_target
+                target_modules=target_modules,
+                modules_to_save=finetuning_args.additional_target
             )
             model = get_peft_model(model, lora_config)
+            if id(model.peft_config) != id(model.base_model.peft_config): # https://github.com/huggingface/peft/issues/923
+                model.base_model.peft_config = model.peft_config
 
     if model_args.checkpoint_dir is not None:
         logger.info("Loaded fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))

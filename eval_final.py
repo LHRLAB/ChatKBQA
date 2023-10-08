@@ -203,7 +203,7 @@ def denormalize_s_expr_new(normed_expr,
                                 t = type_checker(t) # number
                         segments.append(t)
 
-    combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in segments])]
+    combinations = [list(comb) for comb in itertools.islice(itertools.product(*[item if isinstance(item, list) else [item] for item in segments]),10000)]
     
     exprs = [" ".join(s) for s in combinations]
                 
@@ -322,7 +322,7 @@ def try_relation(d):
     for i, item in enumerate(denorm_sexpr):
         if item in rel_list:
             denorm_sexpr[i] = change[item]
-    combinations = [list(comb) for comb in itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr])]
+    combinations = [list(comb) for comb in itertools.islice(itertools.product(*[item if isinstance(item, list) else [item] for item in denorm_sexpr]),10000)]
     exprs = [" ".join(s) for s in combinations][:4000]
     query_exprs = [d.replace('( ','(').replace(' )', ')') for d in exprs]
     for query_expr in query_exprs:

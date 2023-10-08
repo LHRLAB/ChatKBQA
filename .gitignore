@@ -176,3 +176,5 @@ LLMs/LLaMA/src/run_train.sh
 generate_scripts/*
 evaluate_scripts/*
 LLMs/LLaMA1/*
+.vscode/*
+scripts/README_LLaMa2-1.1b.md
