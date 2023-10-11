@@ -30,7 +30,7 @@ def initialize_odbc_connection():
     odbc_conn.setdecoding(pyodbc.SQL_CHAR, encoding='utf8')
     odbc_conn.setdecoding(pyodbc.SQL_WCHAR, encoding='utf8')
     odbc_conn.setencoding(encoding='utf8')
-    odbc_conn.timeout = 60
+    odbc_conn.timeout = 10
     print('Freebase Virtuoso ODBC connected')
 
 
