@@ -2,15 +2,15 @@ torch
 requests
 tqdm
 nltk
-pandas
-scikit-learn
+pandas==1.4.0
+scikit-learn==1.0.1
 glob2==0.7
 networkx
 pyodbc==4.0.31
 sparqlwrapper==1.8.5
 urllib3==1.25.11
 transformers==4.31.0
-numpy
+numpy==1.19.5
 faiss-gpu==1.7.2
 antlr4-python3-runtime==4.9.2
 argparse==1.4.0
@@ -26,7 +26,6 @@ flair
 pytorch-transformers
 flask
 ptvsd
-wandb
 simcse
 wandb
 sse-starlette
