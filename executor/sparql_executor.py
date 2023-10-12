@@ -100,7 +100,8 @@ def get_types_with_odbc(entity: str)  -> List[str]:
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query}")
+        # print(f"Query Execution Failed:{query1}")
+        rows=[]
         # exit(0)
     
 
@@ -239,7 +240,8 @@ def query_two_hop_relations_gmt(entities_path, output_file):
             res_dict[entity] = list(res)
             
         except Exception:
-            print(f"Query Execution Failed:{query}")
+            # print(f"Query Execution Failed:{query1}")
+            rows=[]
     
     # return list(res)
     dump_json(res_dict, output_file)
@@ -304,7 +306,7 @@ def get_2hop_relations_with_odbc(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query1}")
+        # print(f"Query Execution Failed:{query1}")
         rows=[]
         # exit(0)
 
@@ -371,7 +373,7 @@ def get_2hop_relations_with_odbc(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query2}")
+        # print(f"Query Execution Failed:{query2}")
         rows = []
         # exit(0)
     
@@ -434,7 +436,7 @@ def get_2hop_relations_with_odbc(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query3}")
+        # print(f"Query Execution Failed:{query3}")
         rows = []
         # exit(0)
     
@@ -500,7 +502,7 @@ def get_2hop_relations_with_odbc(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query4}")
+        # print(f"Query Execution Failed:{query4}")
         rows = []
         # exit(0)
 
@@ -564,7 +566,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query1}")
+        # print(f"Query Execution Failed:{query1}")
         rows=[]
         # exit(0)
 
@@ -621,7 +623,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query2}")
+        # print(f"Query Execution Failed:{query2}")
         rows = []
         # exit(0)
     
@@ -674,7 +676,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query3}")
+        # print(f"Query Execution Failed:{query3}")
         rows = []
         # exit(0)
     
@@ -730,7 +732,7 @@ def get_2hop_relations_with_odbc_wo_filter(entity: str):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query4}")
+        # print(f"Query Execution Failed:{query4}")
         rows = []
         # exit(0)
 
@@ -829,7 +831,7 @@ def get_label_with_odbc(entity: str) -> str:
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query}")
+        # print(f"Query Execution Failed:{query}")
         exit(0)
     
     
@@ -874,7 +876,7 @@ def get_in_relations_with_odbc(entity: str) -> str:
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query1}")
+        # print(f"Query Execution Failed:{query1}")
         exit(0)
     
 
@@ -914,7 +916,7 @@ def get_out_relations_with_odbc(entity: str) -> str:
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query2}")
+        # print(f"Query Execution Failed:{query2}")
         exit(0)
     
 
@@ -955,7 +957,7 @@ def get_1hop_relations_with_odbc(entity):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query}")
+        # print(f"Query Execution Failed:{query}")
         exit(0)
     
 
@@ -995,7 +997,7 @@ def get_freebase_mid_from_wikiID(wikiID: int):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query2}")
+        # print(f"Query Execution Failed:{query2}")
         exit(0)
     
 
@@ -1051,7 +1053,7 @@ def query_relation_domain_range_label_odbc(input_path, output_path):
                 # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
         except Exception:
-            print(f"Query Execution Failed:{query}")
+            # print(f"Query Execution Failed:{query}")
             exit(0)
         
         res_dict[relation] = dict()
@@ -1092,7 +1094,8 @@ def freebase_query_entity_type_with_odbc(entities_path, output_path):
                         # res_dict[entity].append(row[2])
                         res_dict[entity].append(row[2].replace('http://rdf.freebase.com/ns/', ''))
         except Exception:
-            print(f"Query Execution Failed:{query}")
+            # print(f"Query Execution Failed:{query1}")
+            rows=[]
             # exit(0)
     
     dump_json(output_path, res_dict)
@@ -1129,7 +1132,8 @@ def get_freebase_relations_with_odbc(data_path, limit=100):
             # rows = cursor.fetchall()
             rows = cursor.fetchmany(10000)
     except Exception:
-        print(f"Query Execution Failed:{query}")
+        # print(f"Query Execution Failed:{query1}")
+        rows=[]
         exit(0)
     
     rtn = []
