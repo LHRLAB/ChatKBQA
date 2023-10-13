@@ -424,6 +424,8 @@ def lisp_to_sparql(lisp_program: str):
 
     def get_root(var: int):
         while var in identical_variables_r:
+            if var == identical_variables_r[var]:
+                break
             var = identical_variables_r[var]
 
         return var
