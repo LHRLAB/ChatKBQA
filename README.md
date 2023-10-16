@@ -1,5 +1,5 @@
 # ChatKBQA
-ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models
+ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models \[[paper](https://arxiv.org/abs/2310.08975)\].
 
 ## Overview
 ![](./figs/F1.drawio.png)
@@ -190,6 +190,23 @@ Evaluate KBQA result with golden-entities and relation-retrieval:
 ```bash
 CUDA_VISIBLE_DEVICES=5 nohup python -u eval_final_cwq.py --dataset CWQ --pred_file Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
+
+## BibTex
+
+If you find this work is helpful for your research, please cite:
+
+```bibtex
+@misc{luo2023chatkbqa,
+      title={ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models}, 
+      author={Haoran Luo and Haihong E and Zichen Tang and Shiyao Peng and Yikai Guo and Wentai Zhang and Chenghao Ma and Guanting Dong and Meina Song and Wei Lin},
+      year={2023},
+      eprint={2310.08975},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
+
+For further questions, please contact: luohaoran@bupt.edu.cn, or wechat: lhr1846205978.
 
 ## Acknowledgement
 
