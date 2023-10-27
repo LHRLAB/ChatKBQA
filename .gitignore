@@ -161,6 +161,11 @@ cython_debug/
 
 Freebase-Setup/virtuoso_db
 data/*
+data/common_data/*
+data/CWQ/generation/*
+data/CWQ/sexpr/*
+data/WebQSP/generation/*
+data/WebQSP/sexpr/*
 LLMs/data/WebQSP*
 LLMs/data/CWQ*
 Reading/*
