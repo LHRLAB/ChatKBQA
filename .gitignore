@@ -160,7 +160,6 @@ cython_debug/
 #.idea/
 
 Freebase-Setup/virtuoso_db
-data/*
 data/common_data/*
 data/CWQ/generation/*
 data/CWQ/sexpr/*
