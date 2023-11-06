@@ -25,7 +25,7 @@ Below steps are according to [Freebase Virtuoso Setup](https://github.com/dki-la
 cd Freebase-Setup
 ```
 
-2. Processed [Freebase](https://developers.google.com/freebase) Virtuoso DB file can be downloaded from [here](https://www.dropbox.com/s/q38g0fwx1a3lz8q/virtuoso_db.zip) or via wget (WARNING: 53G+ disk space is needed):
+2. Processed [Freebase](https://developers.google.com/freebase) Virtuoso DB file can be downloaded from [Dropbox](https://www.dropbox.com/s/q38g0fwx1a3lz8q/virtuoso_db.zip) or [Baidu Netdisk](https://pan.baidu.com/s/19BWHgcP534mhmBn5cA6LZg?pwd=29ic) (WARNING: 53G+ disk space is needed):
 ```
 tar -zxvf virtuoso_db.zip
 ```
