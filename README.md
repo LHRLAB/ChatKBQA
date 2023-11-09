@@ -1,9 +1,6 @@
 # ChatKBQA
-
 <h4 >ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models</h4>
 
-
-<!-- [![GitHub Code License](https://img.shields.io/github/license/LHRLAB/ChatKBQA)](LICENSE) -->
 [![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://arxiv.org/abs/2310.08975)
 [![Blog](https://img.shields.io/badge/Blog-Zhihu-blue.svg)](https://zhuanlan.zhihu.com/p/663463273)
 [![Tool](https://img.shields.io/badge/Tool-OpenKG-blue.svg)](http://www.openkg.cn/tool/bupt-chatkbqa)
@@ -11,8 +8,6 @@
 [![Report](https://img.shields.io/badge/Report-NLP-deepgreen.svg)](https://mp.weixin.qq.com/s/tIAGhOmhUxl_o_Z2kZwlaQ)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/chatkbqa-a-generate-then-retrieve-framework/knowledge-base-question-answering-on-1)](https://paperswithcode.com/sota/knowledge-base-question-answering-on-1?p=chatkbqa-a-generate-then-retrieve-framework)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/chatkbqa-a-generate-then-retrieve-framework/knowledge-base-question-answering-on)](https://paperswithcode.com/sota/knowledge-base-question-answering-on?p=chatkbqa-a-generate-then-retrieve-framework)
-
-<!-- <h4 >Haoran Luo, Haihong E, Zichen Tang, Shiyao Peng, Yikai Guo, Wentai Zhang, Chenghao Ma, Guanting Dong, Meina Song, Wei Lin </h4> -->
 ##  Overview 
 
 ![](./figs/F1.drawio.png)
