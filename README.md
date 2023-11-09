@@ -3,7 +3,7 @@
 <h4 >ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models</h4>
 
 
-[![GitHub Code License](https://img.shields.io/github/license/LHRLAB/ChatKBQA)](LICENSE)
+<!-- [![GitHub Code License](https://img.shields.io/github/license/LHRLAB/ChatKBQA)](LICENSE) -->
 [![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://arxiv.org/abs/2310.08975)
 [![Blog](https://img.shields.io/badge/Blog-Zhihu-blue.svg)](https://zhuanlan.zhihu.com/p/663463273)
 [![Tool](https://img.shields.io/badge/Tool-OpenKG-blue.svg)](https://mp.weixin.qq.com/s/htoIZS6s-Uclv2gsVE1MNw)
