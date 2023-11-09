@@ -1,6 +1,6 @@
-# ChatKBQA
+# ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models
 
-<h3 >ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models</h3>
+<!-- <h4 >ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models</h4> -->
 
 
 [![GitHub Code License](https://img.shields.io/github/license/LHRLAB/ChatKBQA)](LICENSE)
