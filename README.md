@@ -114,13 +114,13 @@ Run `python parse_sparql_cwq.py` and the augmented dataset files are saved as `d
 
 - WebQSP: 
 
-Run `python data_process.py --action merge_all --dataset WebQSP --split test[train]`. The merged data file will be saved as `data/WebQSP/generation/merged/WebQSP_test[train].json`.
+Run `python data_process.py --action merge_all --dataset WebQSP --split test` and `python data_process.py --action merge_all --dataset WebQSP --split train`. The merged data file will be saved as `data/WebQSP/generation/merged/WebQSP_test[train].json`.
 
 Run `python data_process.py --action get_type_label_map --dataset WebQSP --split train`. The merged data file will be saved as `data/WebQSP/generation/label_maps/WebQSP_train_type_label_map.json`.
 
 - CWQ: 
 
-Run `python data_process.py --action merge_all --dataset CWQ --split test[train]` The merged data file will be saved as `data/CWQ/generation/merged/CWQ_test[train].json`.
+Run `python data_process.py --action merge_all --dataset CWQ --split test` and `python data_process.py --action merge_all --dataset CWQ --split train`. The merged data file will be saved as `data/CWQ/generation/merged/CWQ_test[train].json`.
 
 Run `python data_process.py --action get_type_label_map --dataset CWQ --split train`. The merged data file will be saved as `data/CWQ/generation/label_maps/CWQ_train_type_label_map.json`.
 
