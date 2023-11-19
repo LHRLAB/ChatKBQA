@@ -182,3 +182,6 @@ evaluate_scripts/*
 LLMs/LLaMA1/*
 .vscode/*
 scripts/README_LLaMa2-1.1b.md
+tongji.py
+tongji_webqsp.py
+tongji_cwq.py
