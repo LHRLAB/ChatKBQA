@@ -34,7 +34,7 @@ Below steps are according to [Freebase Virtuoso Setup](https://github.com/dki-la
 cd Freebase-Setup
 ```
 
-2. Processed [Freebase](https://developers.google.com/freebase) Virtuoso DB file can be downloaded from [Dropbox](https://www.dropbox.com/s/q38g0fwx1a3lz8q/virtuoso_db.zip) or [Baidu Netdisk](https://pan.baidu.com/s/19BWHgcP534mhmBn5cA6LZg?pwd=29ic) (WARNING: 53G+ disk space is needed):
+2. Processed [Freebase](https://developers.google.com/freebase) Virtuoso DB file can be downloaded from [Dropbox](https://www.dropbox.com/s/q38g0fwx1a3lz8q/virtuoso_db.zip) or [Baidu Netdisk](https://pan.baidu.com/s/1EYsn9wbXrTnMME-Gi2OaMg?pwd=vfxb) (WARNING: 53G+ disk space is needed):
 ```
 tar -zxvf virtuoso_db.zip
 ```
@@ -55,7 +55,7 @@ A server with at least 100 GB RAM is recommended.
 
 #### Download FACC1 mentions for Entity Retrieval.
 
-- Download the mention information (including processed FACC1 mentions and all entity alias in Freebase) from [FACC1](https://1drv.ms/u/s!AuJiG47gLqTznjl7VbnOESK6qPW2?e=HDy2Ye) to `data/common_data/facc1/`.
+- Download the mention information (including processed [FACC1](https://github.com/HXX97/GMT-KBQA/blob/main/data/common_data/facc1/README.md) mentions and all entity alias in Freebase) from [OneDrive](https://1drv.ms/u/s!AuJiG47gLqTznjl7VbnOESK6qPW2?e=HDy2Ye) or [Baidu Netdisk](https://pan.baidu.com/s/19BWHgcP534mhmBn5cA6LZg?pwd=29ic) to `data/common_data/facc1/`.
 
 ```
 ChatKBQA/
