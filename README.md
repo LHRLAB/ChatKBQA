@@ -41,7 +41,7 @@ tar -zxvf virtuoso_db.zip
 
 3. Managing the Virtuoso service:
 
-To start service at `localhost:3001/sparl`:
+To start service at `localhost:3001/sparql`:
 ```
 python3 virtuoso.py start 3001 -d virtuoso_db
 ```
