@@ -135,7 +135,7 @@ Run `python process_NQ.py --dataset_type WebQSP`. The merged data file will be s
 
 Run `python process_NQ.py --dataset_type CWQ` The merged data file will be saved as `LLMs/data/CWQ_Freebase_NQ_test[train]/examples.json`.
 
-You can also get the processed SFT data of ChatKBQA in [TeraBox](https://terabox.com/s/1YdKSzU3ScdQGkE-6lHV_fA) or [Baidu Netdisk](https://pan.baidu.com/s/1dazyWIQ8nYt5YiLt8yjFSw?pwd=uvd9), which should be set in `LLMs/data`.
+*Note:* You can also get the processed SFT data of ChatKBQA from [TeraBox](https://terabox.com/s/1YdKSzU3ScdQGkE-6lHV_fA) or [Baidu Netdisk](https://pan.baidu.com/s/1dazyWIQ8nYt5YiLt8yjFSw?pwd=uvd9), which should be set in `LLMs/data`.
 
 ## Fine-tuning, Retrieval and Evaluation
 
