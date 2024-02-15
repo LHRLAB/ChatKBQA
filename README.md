@@ -210,6 +210,20 @@ Evaluate KBQA result with golden-entities and relation-retrieval:
 CUDA_VISIBLE_DEVICES=5 nohup python -u eval_final_cwq.py --dataset CWQ --pred_file Reading/LLaMA2-13b/CWQ_Freebase_NQ_lora_epoch10/evaluation_beam/beam_test_top_k_predictions.json --golden_ent >> predfinalgoldent_LLaMA2-13b_CWQ_Freebase_NQ_lora_epoch10.txt 2>&1 &
 ```
 
+**Note:** You can also get the ChatKBQA checkpoints and evaluations from [TeraBox](https://terabox.com/s/1Iq8u4M1lQHI2iIMYTNJmUw) or [Baidu Netdisk](https://pan.baidu.com/s/1I5j_FktPF5R0hI1In1qlkQ?pwd=53p5), which should be set in `Reading/`.
+```
+ChatKBQA/
+└── Reading/
+    ├── LLaMA2-7b/                 
+        ├── WebQSP_Freebase_NQ_lora_epoch100/  
+            ├── checkpoint/    
+            └──evaluation_beam/  
+    ├── LLaMA2-13b/                 
+        ├── CWQ_Freebase_NQ_lora_epoch10/  
+            ├── checkpoint/    
+            └── evaluation_beam/                                              
+```
+
 ## BibTex
 
 If you find this work is helpful for your research, please cite:
