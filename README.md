@@ -217,7 +217,7 @@ ChatKBQA/
     ├── LLaMA2-7b/                 
         ├── WebQSP_Freebase_NQ_lora_epoch100/  
             ├── checkpoint/    
-            └──evaluation_beam/  
+            └── evaluation_beam/  
     ├── LLaMA2-13b/                 
         ├── CWQ_Freebase_NQ_lora_epoch10/  
             ├── checkpoint/    
