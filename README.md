@@ -124,6 +124,19 @@ Run `python data_process.py --action merge_all --dataset CWQ --split test` and `
 
 Run `python data_process.py --action get_type_label_map --dataset CWQ --split train`. The merged data file will be saved as `data/CWQ/generation/label_maps/CWQ_train_type_label_map.json`.
 
+**Note:** You can also get the ChatKBQA processed data from [TeraBox](https://terabox.com/s/1Oa7mz7WlrlqdWRaH_9nnUg) or [Baidu Netdisk](https://pan.baidu.com/s/1ikNCCCtYd9izN0Ok3ozdZA?pwd=j6jk), which should be set in `data/`.
+```
+ChatKBQA/
+└── data/
+    ├── CWQ/                 
+        ├── generation/    
+        ├── origin/
+        └── sexpr/  
+    └── WebQSP/                 
+        ├── generation/    
+        ├── origin/
+        └── sexpr/                                               
+```
 
 (3) **Prepare data for LLM model**
 
