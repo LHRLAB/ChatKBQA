@@ -163,7 +163,7 @@ ChatKBQA/
 
 ## Fine-tuning, Retrieval and Evaluation
 
-The following is an example of [LLaMa2-7b](README.md) fine-tuning and retrieval (num_beam = 15) on WebQSP and [LLaMa2-13b](README.md) fine-tuning and retrieval (num_beam = 8) on CWQ, respectively. We also provide a variety of LLMs (including [LLaMa2-7b](scripts/README_LLaMa2-7b.md), [LLaMa2-13b](scripts/README_LLaMa2-13b.md), [ChatGLM2-6b](scripts/README_ChatGLM2-6b.md), [Baichuan2-7b](scripts/README_Baichuan2-7b.md), [Baichuan2-13b](scripts/README_Baichuan2-13b.md)) fine-tuning scripts (num_beam = 8).
+The following is an example of [LLaMa2-7b](README.md) fine-tuning and retrieval (num_beam = 15) on WebQSP and [LLaMa2-13b](README.md) fine-tuning and retrieval (num_beam = 8) on CWQ, respectively. 
 
 (1) **Train and test LLM model for Logical Form Generation**
 
