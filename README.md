@@ -1,8 +1,8 @@
 # ChatKBQA
 
-Official resources of **"ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models"**. Haoran Luo, Haihong E, Zichen Tang, Shiyao Peng, Yikai Guo, Wentai Zhang, Chenghao Ma, Guanting Dong, Meina Song, Wei Lin, Yifan Zhu, Luu Anh Tuan. **Findings of ACL 2024** \[[paper](https://arxiv.org/pdf/2310.08975)\]. 
+Official resources of **"ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models"**. Haoran Luo, Haihong E, Zichen Tang, Shiyao Peng, Yikai Guo, Wentai Zhang, Chenghao Ma, Guanting Dong, Meina Song, Wei Lin, Yifan Zhu, Luu Anh Tuan. **Findings of ACL 2024** \[[paper](https://aclanthology.org/2024.findings-acl.122/)\]. 
 
-[![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://arxiv.org/abs/2310.08975)
+[![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://aclanthology.org/2024.findings-acl.122/)
 [![Blog](https://img.shields.io/badge/Blog-Zhihu-blue.svg)](https://zhuanlan.zhihu.com/p/663463273)
 [![Tool](https://img.shields.io/badge/Tool-OpenKG-blue.svg)](http://www.openkg.cn/tool/bupt-chatkbqa)
 [![Report](https://img.shields.io/badge/Report-OpenKG-deepgreen.svg)](https://mp.weixin.qq.com/s/htoIZS6s-Uclv2gsVE1MNw)
@@ -243,13 +243,31 @@ ChatKBQA/
 If you find this work is helpful for your research, please cite:
 
 ```bibtex
-@misc{luo2023chatkbqa,
-      title={ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models}, 
-      author={Haoran Luo and Haihong E and Zichen Tang and Shiyao Peng and Yikai Guo and Wentai Zhang and Chenghao Ma and Guanting Dong and Meina Song and Wei Lin},
-      year={2023},
-      eprint={2310.08975},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@inproceedings{luo-etal-2024-chatkbqa,
+    title = "{C}hat{KBQA}: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models",
+    author = "Luo, Haoran  and
+      E, Haihong  and
+      Tang, Zichen  and
+      Peng, Shiyao  and
+      Guo, Yikai  and
+      Zhang, Wentai  and
+      Ma, Chenghao  and
+      Dong, Guanting  and
+      Song, Meina  and
+      Lin, Wei  and
+      Zhu, Yifan  and
+      Luu, Anh Tuan",
+    editor = "Ku, Lun-Wei  and
+      Martins, Andre  and
+      Srikumar, Vivek",
+    booktitle = "Findings of the Association for Computational Linguistics ACL 2024",
+    month = aug,
+    year = "2024",
+    address = "Bangkok, Thailand and virtual meeting",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.findings-acl.122",
+    pages = "2039--2056",
+    abstract = "Knowledge Base Question Answering (KBQA) aims to answer natural language questions over large-scale knowledge bases (KBs), which can be summarized into two crucial steps: knowledge retrieval and semantic parsing. However, three core challenges remain: inefficient knowledge retrieval, mistakes of retrieval adversely impacting semantic parsing, and the complexity of previous KBQA methods. To tackle these challenges, we introduce ChatKBQA, a novel and simple generate-then-retrieve KBQA framework, which proposes first generating the logical form with fine-tuned LLMs, then retrieving and replacing entities and relations with an unsupervised retrieval method, to improve both generation and retrieval more directly. Experimental results show that ChatKBQA achieves new state-of-the-art performance on standard KBQA datasets, WebQSP, and CWQ. This work can also be regarded as a new paradigm for combining LLMs with knowledge graphs (KGs) for interpretable and knowledge-required question answering.",
 }
 ```
 
