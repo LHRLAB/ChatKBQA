@@ -243,7 +243,7 @@ ChatKBQA/
 If you find this work is helpful for your research, please cite:
 
 ```bibtex
-@inproceedings{luo-etal-2024-chatkbqa,
+@inproceedings{luo2024chatkbqa,
     title = "{C}hat{KBQA}: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models",
     author = "Luo, Haoran  and
       E, Haihong  and
