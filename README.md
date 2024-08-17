@@ -2,7 +2,7 @@
 
 Official resources of **"ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models"**. Haoran Luo, Haihong E, Zichen Tang, Shiyao Peng, Yikai Guo, Wentai Zhang, Chenghao Ma, Guanting Dong, Meina Song, Wei Lin, Yifan Zhu, Luu Anh Tuan. **Findings of ACL 2024** \[[paper](https://aclanthology.org/2024.findings-acl.122/)\]. 
 
-[![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://aclanthology.org/2024.findings-acl.122/)
+[![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://aclanthology.org/2024.findings-acl.122.pdf)
 [![Blog](https://img.shields.io/badge/Blog-Zhihu-blue.svg)](https://zhuanlan.zhihu.com/p/663463273)
 [![Tool](https://img.shields.io/badge/Tool-OpenKG-blue.svg)](http://www.openkg.cn/tool/bupt-chatkbqa)
 [![Report](https://img.shields.io/badge/Report-OpenKG-deepgreen.svg)](https://mp.weixin.qq.com/s/htoIZS6s-Uclv2gsVE1MNw)
