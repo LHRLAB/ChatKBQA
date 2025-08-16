@@ -8,7 +8,6 @@ Official resources of **"ChatKBQA: A Generate-then-Retrieve Framework for Knowle
 [![Report](https://img.shields.io/badge/Report-OpenKG-deepgreen.svg)](https://mp.weixin.qq.com/s/htoIZS6s-Uclv2gsVE1MNw)
 [![Report](https://img.shields.io/badge/Report-NLP-deepgreen.svg)](https://mp.weixin.qq.com/s/tIAGhOmhUxl_o_Z2kZwlaQ)
 
-
 ##  Overview 
 
 ![](./figs/F1.drawio.png)
