@@ -7,8 +7,6 @@ Official resources of **"ChatKBQA: A Generate-then-Retrieve Framework for Knowle
 [![Tool](https://img.shields.io/badge/Tool-OpenKG-blue.svg)](http://www.openkg.cn/tool/bupt-chatkbqa)
 [![Report](https://img.shields.io/badge/Report-OpenKG-deepgreen.svg)](https://mp.weixin.qq.com/s/htoIZS6s-Uclv2gsVE1MNw)
 [![Report](https://img.shields.io/badge/Report-NLP-deepgreen.svg)](https://mp.weixin.qq.com/s/tIAGhOmhUxl_o_Z2kZwlaQ)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/chatkbqa-a-generate-then-retrieve-framework/knowledge-base-question-answering-on-1)](https://paperswithcode.com/sota/knowledge-base-question-answering-on-1?p=chatkbqa-a-generate-then-retrieve-framework)
-<!-- [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/chatkbqa-a-generate-then-retrieve-framework/knowledge-base-question-answering-on)](https://paperswithcode.com/sota/knowledge-base-question-answering-on?p=chatkbqa-a-generate-then-retrieve-framework) -->
 
 ##  Overview 
 
